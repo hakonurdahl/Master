@@ -10,6 +10,8 @@ from matplotlib import cm  # For colormap
 from matplotlib.colors import Normalize  # For normalizing values
 
 ### INPUT ####
+#ChatGPT was used to transform Multiplelocationsmap.py to make a color coding of the locations based of the reliability index 
+
 h_Trd_gl = 0.1254
 cov_Trd_gl = 0.7
 sk_Trd_gl = 3.5
@@ -39,7 +41,7 @@ Bf_lom, Bmc_lom = MAIN(h_lom, cov_lom, sk_lom)
 
 
 
-
+#For very high reliability indices the FORM malfunctions and returns 1. This is handled by setting b=5 when no failures accure in the Monte Carlo simulation
 
 reliability_indices = {
     "Trondheim 1 (Gløshaugen)": 5 if Bmc_trd_gl == float('inf') else Bf_trd_gl,
