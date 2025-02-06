@@ -1,0 +1,82 @@
+
+import xarray as xr
+import matplotlib.pyplot as plt
+from pyproj import Transformer
+import numpy as np
+import pandas as pd
+from municipalities import municipalities_data
+
+
+
+
+
+def samples(name):
+
+
+
+    # Geographical coordinates
+    longitude = municipalities_data[name]['coordinates'][0] 
+    latitude =  municipalities_data[name]['coordinates'][1]
+
+    
+
+    def closest(lat, lon):# Calculate the distance to  for each point in the SWE dataset
+        
+
+
+        opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
+
+        try:
+            # Open the dataset
+            ds = xr.open_dataset(opendap_url, chunks=None)
+                
+
+        except Exception as e:
+            print(f"Could not process year 2024: {e}")
+
+        latitudes = ds['lat'].values
+        longitudes = ds['lon'].values
+        distances = np.sqrt((latitudes - lat)**2 + (longitudes - lon)**2)
+        min_dist_index = np.unravel_index(np.argmin(distances), distances.shape)
+
+        # Get the closest point coordinates
+        closest_lat = latitudes[min_dist_index]
+        closest_lon = longitudes[min_dist_index]
+        return closest_lat, closest_lon
+
+
+    #Find a center point that is close to the requested point
+    actual_lat, actual_lon = closest(latitude, longitude) 
+
+    coordinate_samples=[]
+
+
+    run=0   #The algorythm that find the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
+    
+    if run==1:
+        test_lat=actual_lat-0.01
+        for i in range(1):
+            
+            test_lon = actual_lon - 0.01        
+
+            for k in range(1):
+                
+                
+                lat, lon = closest(test_lat, test_lon)
+
+                if lon==actual_lon and lat==actual_lat:
+                    coordinate_samples.append((float(test_lat), float(test_lon)))
+
+                test_lon+=0.001
+            
+            test_lat+=0.001
+    else:
+        coordinate_samples.append((float(actual_lat), float(actual_lon)))    
+        
+        
+
+    return coordinate_samples
+
+
+
+
