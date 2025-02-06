@@ -7,7 +7,17 @@ import pandas as pd
 from municipalities import municipalities_data
 
 
-
+# The measurements from SeNorge is done over a square kilometer, which means the area can have large differences in elevation.
+# Snow is very dependent on elevation. There is more snow on higher altitudes. 
+# Since the reliaiblity analysis is reliant on a characteristic value for snow load the elevation plays a major role.
+# To deal with this, elevation_points.py locates a grid of points that is within this square kilometer.
+# The elevation can then be found for each of these points in elevation.py. Then the characteristic load calculation can
+# for example use the average value for elevation. The method for finding these points is to first find the center of the square.
+# The center of all squares is the point listed in the data set. So when a point is found in this data set it is the center.
+# Then a grid of points around the center is generated and if the generated point is closest to the center in question it is 
+# appended to the list of coordinates. This list will then contain all the points included in the measurement of snow.
+# The function that finds the point closest to a coordinate uses a "brute force" method, because the more efficient "nearest" method 
+# gave wrong results. 
 
 
 def samples(name):
@@ -15,8 +25,8 @@ def samples(name):
 
 
     # Geographical coordinates
-    longitude = municipalities_data[name]['coordinates'][0] 
-    latitude =  municipalities_data[name]['coordinates'][1]
+    longitude = municipalities_data[name]['coordinates']['longitude'] 
+    latitude =  municipalities_data[name]['coordinates']['latitude'] 
 
     
 
@@ -51,15 +61,15 @@ def samples(name):
     coordinate_samples=[]
 
 
-    run=0   #The algorythm that find the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
+    run=1   #The algorythm that finds the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
     
-    if run==1:
+    if run==0:
         test_lat=actual_lat-0.01
-        for i in range(1):
+        for i in range(20):
             
             test_lon = actual_lon - 0.01        
 
-            for k in range(1):
+            for k in range(20):
                 
                 
                 lat, lon = closest(test_lat, test_lon)

@@ -12,6 +12,12 @@ Created on Mon Jun 29 14:21:22 2020
 @author: jorgemen
 """
 
+
+import csv
+import os
+import ast
+
+
 import numpy as np
 import scipy as sp
 import scipy.stats
@@ -247,3 +253,20 @@ def truncate(n, decimals=0):
     multiplier = 10 ** decimals
     return int(n * multiplier) / multiplier
 
+
+#Read csv files -HU
+def get_values(csv_file_path, municipality_name,variable):
+    """Reads values for a given municipality from a CSV file."""
+    with open(csv_file_path, mode='r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        
+        for row in reader:
+            # Check if the municipality name matches
+            if row["Municipality"] == municipality_name:
+                # Parse the values safely using ast.literal_eval()
+                values = ast.literal_eval(row[variable])
+                return values
+                
+    # Return None if the municipality is not found
+    print(f"No data found for municipality: {municipality_name}")
+    return None

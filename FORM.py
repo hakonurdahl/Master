@@ -11,6 +11,11 @@ from elevation_points import samples
 from elevation import get_elevations
 from statistics import mean
 from math import ceil
+from A_funcstat import get_values
+
+# The normalized FORM algorythm used in the project assignment. The characteristic value is calculated from the directory/csv file. The elevation chosen is the average of all the elevations
+# from elevation_samples.py. The form is done by calculating the CoV from the data. However, it doesn't make sense to normalize when the absolute value of the data is relevant? 
+# I also have trouble normalizing the characteristic value. a_q and a_g is chosen arbitrarily. 
 
 
 def char(name):
@@ -23,12 +28,8 @@ def char(name):
     longitude=municipalities_data[name]['coordinates']['longitude']
     points=samples(name)
     
-    run_=0      #To avoid using API
-
-    if run_==1:
-        elevation = mean(get_elevations(points))
-    else:
-        elevation=0
+    elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_elevation.csv',name, 'Elevation'))
+    
 
     n=max(ceil((elevation-hg)/100), 0)
 
@@ -42,10 +43,11 @@ def char(name):
 
 
 
-def form(name):   #Calculate beta
+def municipality_form(name):   #Calculate beta
 
 
-    snow_maxima=meas.measurements(name)['swe']
+    snow_maxima=get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_swe.csv', name, 'SWE')
+
     loc, scale = stats.gumbel_r.fit(snow_maxima)
 
     gamma = 0.57722  
@@ -57,10 +59,10 @@ def form(name):   #Calculate beta
     # Compute CoV
     cov_snow = std_gumbel / mean_gumbel
 
-    char=char(name)
+    char_=char(name)
 
 
-    X = prep.RandomVariablesAux(cov_snow, char)
+    X = prep.RandomVariablesAux(cov_snow, char_)
 
     g_ = inp.StartValues()
     aqq=0.9
@@ -82,5 +84,5 @@ def form(name):   #Calculate beta
     return BETA,ALPHA
 
 
-#BETA,ALPHA=MAIN('Loppa')
+#BETA,ALPHA=municipality_form('Aremark')
 #print(BETA)
