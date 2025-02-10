@@ -7,7 +7,6 @@ import C_Input_AHG as inp
 import D_Preprocessing as prep
 import measurements as meas
 from municipalities import municipalities_data
-from elevation_points import samples
 from elevation import get_elevations
 from statistics import mean
 from math import ceil
@@ -26,7 +25,6 @@ def char(name):
     sk_maks=municipalities_data[name]['sk_maks']
     latitude=municipalities_data[name]['coordinates']['latitude']
     longitude=municipalities_data[name]['coordinates']['longitude']
-    points=samples(name)
     
     elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_elevation.csv',name, 'Elevation'))
     
@@ -47,7 +45,14 @@ def municipality_form(name):   #Calculate beta
 
 
     snow_maxima=get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_swe.csv', name, 'SWE')
-
+    
+    
+    #If the coordinate is in the sea or lake, there will be no values.
+    if np.isnan(snow_maxima[0]):
+        return np.nan, np.nan
+    
+    
+    
     loc, scale = stats.gumbel_r.fit(snow_maxima)
 
     gamma = 0.57722  
@@ -64,6 +69,7 @@ def municipality_form(name):   #Calculate beta
 
     X = prep.RandomVariablesAux(cov_snow, char_)
 
+    #Arbitrary values
     g_ = inp.StartValues()
     aqq=0.9
     agg=0.1
@@ -84,5 +90,5 @@ def municipality_form(name):   #Calculate beta
     return BETA,ALPHA
 
 
-#BETA,ALPHA=municipality_form('Aremark')
+#BETA,ALPHA=municipality_form('Færder')
 #print(BETA)

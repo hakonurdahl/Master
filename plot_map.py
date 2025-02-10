@@ -15,6 +15,12 @@ municipalities_df = pd.read_csv(csv_path)
 reliability_indices = municipalities_df.set_index("Municipality")[["Beta"]].to_dict()["Beta"]
 locations = municipalities_df[["Municipality", "Latitude", "Longitude"]].values
 
+
+# Filter out NaN values
+reliability_indices = {k: v for k, v in reliability_indices.items() if not np.isnan(v)}
+locations = [loc for loc in locations if loc[0] in reliability_indices]
+
+
 # Normalize reliability indices for colormap
 norm = Normalize(vmin=min(reliability_indices.values()), vmax=max(reliability_indices.values()))
 colormap = plt.cm.RdYlGn  # Red-to-Green colormap
@@ -40,9 +46,12 @@ ax.add_feature(cfeature.COASTLINE)
 norway.boundary.plot(ax=ax, color="blue", linewidth=1)
 
 # Plot municipalities
+
 for name, x, y in utm_locations:
-    beta_label = f"{reliability_indices[name]:.2f}" if reliability_indices[name] != 5 else ">5"
-    ax.plot(x, y, marker="o", color=location_colors[name], markersize=5, label=f"{name}: $\\beta$ = {beta_label}")
+    if name in reliability_indices:  # Double-check to avoid errors
+        beta_label = f"{reliability_indices[name]:.2f}" if reliability_indices[name] != 5 else ">5"
+        ax.plot(x, y, marker="o", color=location_colors[name], markersize=5, label=f"{name}: $\\beta$ = {beta_label}")
+
 
 # Add colorbar
 sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)

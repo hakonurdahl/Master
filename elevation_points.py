@@ -20,7 +20,7 @@ from municipalities import municipalities_data
 # gave wrong results. 
 
 
-def samples(name):
+def samples(name, ds):
 
 
 
@@ -34,15 +34,7 @@ def samples(name):
         
 
 
-        opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
-
-        try:
-            # Open the dataset
-            ds = xr.open_dataset(opendap_url, chunks=None)
-                
-
-        except Exception as e:
-            print(f"Could not process year 2024: {e}")
+        
 
         latitudes = ds['lat'].values
         longitudes = ds['lon'].values
@@ -61,15 +53,15 @@ def samples(name):
     coordinate_samples=[]
 
 
-    run=1   #The algorythm that finds the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
+    run=0   #The algorythm that finds the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
     
     if run==0:
         test_lat=actual_lat-0.01
-        for i in range(20):
+        for i in range(5):
             
             test_lon = actual_lon - 0.01        
 
-            for k in range(20):
+            for k in range(5):
                 
                 
                 lat, lon = closest(test_lat, test_lon)
@@ -77,9 +69,9 @@ def samples(name):
                 if lon==actual_lon and lat==actual_lat:
                     coordinate_samples.append((float(test_lat), float(test_lon)))
 
-                test_lon+=0.001
+                test_lon+=0.004
             
-            test_lat+=0.001
+            test_lat+=0.004
     else:
         coordinate_samples.append((float(actual_lat), float(actual_lon)))    
         
@@ -88,5 +80,19 @@ def samples(name):
     return coordinate_samples
 
 
+#Test
 
+#opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
+#
+#try:
+#    # Open the dataset    
+#    ds = xr.open_dataset(opendap_url, chunks=None)
+#        
+#
+#except Exception as e:
+#    print(f"Could not process year 2024: {e}")
+
+
+
+#print(samples('Hol'))
 
