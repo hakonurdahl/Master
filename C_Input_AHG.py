@@ -50,7 +50,7 @@ def LoadRatios():
     return typ, naq, nag
 
 
-def RandomVariables(cov_snow, char):
+def RandomVariables(mean_snow, cov_snow, char):
     #--------------------------------------------------------------------------
     ### Random variables
     X = {}
@@ -216,11 +216,11 @@ def RandomVariables(cov_snow, char):
     X['X1']['name'] = 'Steel yield strength'
     X['X1']['symbol'] = 'R_{steel}'
     X['X1']['dist'] = 'lognormal'             
-    X['X1']['mu'] = 1.0
-    X['X1']['cov'] = 0.05
+    X['X1']['mu'] = 309
+    X['X1']['cov'] = 0.07
     X['X1']['fractile'] = '-'       #(absurd) fractile chosen such that char. value complies with value of 0.83, adopted in previous input (June 2021). Was this value adopted in the AHG calculations?
     X['X1']['gm'] = 1.0
-    X['X1']['char'] = 0.83
+    X['X1']['char'] = 275
     #--------------------------------------------------------------------------
     X['X2'] = {}    
     X['X2']['name'] = 'Concrete compression strength'
@@ -440,7 +440,7 @@ def RandomVariables(cov_snow, char):
     X['Z2']['symbol'] = 'Q_{s}'
     X['Z2']['dist'] = 'gumbel'
     X['Z2']['Tr'] = 50                                     # Reference period corresponding to probabilistic model (mu, cov). Must be larger or equal than Tr_bas. Default: 1 y
-    X['Z2']['mu'] = 1.0
+    X['Z2']['mu'] = mean_snow
     X['Z2']['cov'] = cov_snow
     X['Z2']['Tr_bas'] = 1                                  # Basic reference period. For snow, normally Tr_bas = 1 year (default)
     X['Z2']['fractile'] = 0.98                             # Not needed if char user-defined; otherwise it corresponds to T=Tr_bas if char_method = 0 and to T = max(Tref;Tr_bas) if char_method = 1

@@ -19,7 +19,7 @@ import C_Input_AHG as inp
 
   
                         # X, C, Load ratios and Tref should correspond to the user-defined cases (overwrite default X given in DefaultInput.py)
-C = inp.AssumptionsCosts()                        
+#C = inp.AssumptionsCosts()                        
 typ, naq, nag = inp.LoadRatios()
 Tref = inp.Tref()
 
@@ -64,8 +64,8 @@ def MatAsign():
 
 
 ## Assigning the coeffiecient of variance of snow
-def RandomVariablesAux(cov_snow, char):
-    X = inp.RandomVariables(cov_snow, char) 
+def RandomVariablesAux(mean_snow, cov_snow, char):
+    X = inp.RandomVariables(mean_snow, cov_snow, char) 
 # Auxiliary function that completes characterization of user-specified random variables
     # All variables 
     for key in X:

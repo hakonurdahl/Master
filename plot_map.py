@@ -15,14 +15,14 @@ municipalities_df = pd.read_csv(csv_path)
 reliability_indices = municipalities_df.set_index("Municipality")[["Beta"]].to_dict()["Beta"]
 locations = municipalities_df[["Municipality", "Latitude", "Longitude"]].values
 
-
 # Filter out NaN values
 reliability_indices = {k: v for k, v in reliability_indices.items() if not np.isnan(v)}
 locations = [loc for loc in locations if loc[0] in reliability_indices]
 
 
 # Normalize reliability indices for colormap
-norm = Normalize(vmin=min(reliability_indices.values()), vmax=max(reliability_indices.values()))
+norm = Normalize(vmin=min(reliability_indices.values()), vmax=5)
+
 colormap = plt.cm.RdYlGn  # Red-to-Green colormap
 
 # Assign colors based on reliability index

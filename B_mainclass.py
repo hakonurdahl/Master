@@ -34,13 +34,13 @@ class ZBETA:
         aq = self.aq
         deq=self.d              
         if deq == 0:
-            z = ((1-aq)*(ag*gk*g_g+(1-ag)*pk*g_p)+aq*qk*g_q)*g_r/(xrk*rk)
+            z = ((gk*g_g+pk*g_p*2)+qk*g_q)*g_r/(xrk*rk)
         elif deq == 1:
             xi = self.g['xi']       
             psi = self.g['psi']     
             z_alt = [0] * 2
-            z_alt[0]= ((1-aq)*(ag*gk*g_g+(1-ag)*pk*g_p)+aq*qk*psi*g_q)*g_r/(xrk*rk)
-            z_alt[1]= ((1-aq)*(ag*gk*g_g*xi+(1-ag)*pk*g_p*xi)+aq*qk*g_q)*g_r/(xrk*rk)
+            z_alt[0]= ((gk*g_g+pk*g_p*2)+qk*psi*g_q)*g_r/(xrk*rk)
+            z_alt[1]= ((gk*g_g*xi+pk*g_p*xi)+qk*g_q*2)*g_r/(xrk*rk)
             z=np.max(z_alt)
         return z
  
@@ -58,12 +58,12 @@ class ZBETA:
   
    
 #    def gX(self,x,z):
-#        lsf = z*x[0]*x[1]-((1-self.aq)*(self.ag*x[2]+(1-self.ag)*x[3])+self.aq*x[4]*x[5])
+#        lsf = z*x[0]*x[1]-((x[2]+x[3])+x[4]*x[5])
 #        return lsf
     
     def gU(self,u,z):
         #lsf = gX([self.XR['x2u'](u[0]),self.R['x2u'](u[1]),self.G['x2u'](u[2]),self.P['x2u'](u[3]),self.XQ['x2u'](u[4]),self.Q['x2u'](u[5])],z)
-        lsf = z*self.XR['x2u'](u[0])*self.R['x2u'](u[1])-self.XX['x2u'](u[2])*((1-self.aq)*(self.ag*self.G['x2u'](u[3])+(1-self.ag)*self.P['x2u'](u[4]))+self.aq*self.XQ['x2u'](u[5])*self.Q['x2u'](u[6]))
+        lsf = z*self.XR['x2u'](u[0])*self.R['x2u'](u[1])-self.XX['x2u'](u[2])*((self.G['x2u'](u[3])+self.P['x2u'](u[4]))+self.XQ['x2u'](u[5])*self.Q['x2u'](u[6]))
         return lsf
     
 
@@ -72,11 +72,11 @@ class ZBETA:
         gdiff = []
         gdiff.append(lambda u: z*self.XR['xdiffu'](u[0]) * self.R['x2u'](u[1])) #over XR
         gdiff.append(lambda u: z*self.XR['x2u'](u[0]) * self.R['xdiffu'](u[1])) #over R
-        gdiff.append(lambda u: -self.XX['xdiffu'](u[2])*((1-self.aq)*(self.ag*self.G['x2u'](u[3])+(1-self.ag)*self.P['x2u'](u[4]))+self.aq*self.XQ['x2u'](u[5])*self.Q['x2u'](u[6])))
-        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * (1-self.aq)*(self.ag)*self.G['xdiffu'](u[3]))
-        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * (1-self.aq)*(1-self.ag)*self.P['xdiffu'](u[4]))
-        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.aq*self.XQ['xdiffu'](u[5])*self.Q['x2u'](u[6]))
-        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.aq*self.XQ['x2u'](u[5])*self.Q['xdiffu'](u[6]))
+        gdiff.append(lambda u: -self.XX['xdiffu'](u[2])*((self.G['x2u'](u[3])+self.P['x2u'](u[4]))+self.XQ['x2u'](u[5])*self.Q['x2u'](u[6])))
+        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.G['xdiffu'](u[3]))
+        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.P['xdiffu'](u[4]))
+        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.XQ['xdiffu'](u[5])*self.Q['x2u'](u[6]))
+        gdiff.append(lambda u: -self.XX['x2u'](u[2]) * self.XQ['x2u'](u[5])*self.Q['xdiffu'](u[6]))
         
         k = lambda u: np.sqrt(gdiff[0](u)**2+gdiff[1](u)**2+gdiff[2](u)**2+gdiff[3](u)**2+gdiff[4](u)**2+gdiff[5](u)**2+gdiff[6](u)**2)
     
@@ -115,7 +115,7 @@ class ZBETA:
         xq=A_funcstat.distinv(self.XQ['dist'])(np.random.random_sample((nos)),self.XQ['par'])
         q=A_funcstat.distinv(self.Q['dist'])(np.random.random_sample((nos)),self.Q['par'])
         
-        fail = -(z*xr*r-xx*((1-self.aq)*(self.ag*g+(1-self.ag)*p)+self.aq*xq*q))
+        fail = -(z*xr*r-xx*((g+p)+xq*q))
 
         
         nfail=np.sum(np.heaviside(fail,1))

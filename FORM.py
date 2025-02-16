@@ -60,14 +60,14 @@ def municipality_form(name):   #Calculate beta
     # Compute mean and standard deviation
     mean_gumbel = loc + gamma * scale
     std_gumbel = (np.pi / np.sqrt(6)) * scale
-
+    mean_snow_=mean_gumbel*9.8*2/100 # Converting mm to kN/m
     # Compute CoV
     cov_snow = std_gumbel / mean_gumbel
 
     char_=char(name)
 
 
-    X = prep.RandomVariablesAux(cov_snow, char_)
+    X = prep.RandomVariablesAux(mean_snow_, cov_snow, char_)
 
     #Arbitrary values
     g_ = inp.StartValues()
@@ -75,13 +75,13 @@ def municipality_form(name):   #Calculate beta
     agg=0.1
     deq=1
 
-    P_= X['Y31']                #                                                 
-    XX_ = X['Y11']              #
-    Q_ = X['Z2']                #variable load 
+    P_= X['Y31']                # Permanent load                                                
+    XX_ = X['Y11']              # Load effect model uncertainty
+    Q_ = X['Z2']                # Variable load 
     XQ_ = X[X['Z2']['MUV']]     #
-    XR_= X['X11']               #resistance model uncertainty
-    R_ = X[X['X11']['RV']]      #material property
-    G_ = X[X['X11']['GV']]      #
+    XR_= X['X11']               # Resistance model uncertainty
+    R_ = X[X['X11']['RV']]      # Material property
+    G_ = X[X['X11']['GV']]      # Self weight
 
 
     zet = form.ZBETA(ag=agg, aq=aqq, XR=XR_, R=R_, XX=XX_, G=G_, P=P_, XQ=XQ_, Q=Q_, g=g_, d=deq)
@@ -89,6 +89,3 @@ def municipality_form(name):   #Calculate beta
     BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
     return BETA,ALPHA
 
-
-#BETA,ALPHA=municipality_form('Færder')
-#print(BETA)
