@@ -53,15 +53,15 @@ def samples(name, ds):
     coordinate_samples=[]
 
 
-    run=0   #The algorythm that finds the relevant points takes a lot of time, so to just find the elevation at one point set run to zero
+    run=0   #The algorythm that finds the relevant points takes a lot of time, so to just find the elevation at one point set run to 1
     
     if run==0:
         test_lat=actual_lat-0.01
-        for i in range(5):
+        for i in range(20):
             
             test_lon = actual_lon - 0.01        
 
-            for k in range(5):
+            for k in range(10):
                 
                 
                 lat, lon = closest(test_lat, test_lon)
@@ -69,9 +69,9 @@ def samples(name, ds):
                 if lon==actual_lon and lat==actual_lat:
                     coordinate_samples.append((float(test_lat), float(test_lon)))
 
-                test_lon+=0.004
+                test_lon+=0.002
             
-            test_lat+=0.004
+            test_lat+=0.001
     else:
         coordinate_samples.append((float(actual_lat), float(actual_lon)))    
         
@@ -83,16 +83,16 @@ def samples(name, ds):
 #Test
 
 #opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
-#
+
 #try:
 #    # Open the dataset    
-#    ds = xr.open_dataset(opendap_url, chunks=None)
-#        
-#
+#    ds_ = xr.open_dataset(opendap_url, chunks=None)
+        
+
 #except Exception as e:
 #    print(f"Could not process year 2024: {e}")
 
 
 
-#print(samples('Hol'))
+#print(samples('Tønsberg', ds_))
 

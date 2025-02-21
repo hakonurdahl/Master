@@ -27,7 +27,7 @@ def char(name):
     longitude=municipalities_data[name]['coordinates']['longitude']
     
     elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_elevation.csv',name, 'Elevation'))
-    
+
 
     n=max(ceil((elevation-hg)/100), 0)
 

@@ -1,67 +1,94 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pyproj import Transformer
 import geopandas as gpd
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+import csv
+import os
+from pyproj import Transformer
 from matplotlib.colors import Normalize
+import matplotlib.patches as mpatches  # Import for custom legend patches
 
-# Load Data
+# File paths
 csv_path = "C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_map.csv"
-municipalities_df = pd.read_csv(csv_path)
+geojson_path = "C:/Users/hakon/SnowAnalysis_JK/DataSources/Basisdata_0000_Norge_25833_Kommuner_GeoJSON/Basisdata_0000_Norge_25833_Kommuner_GeoJSON.geojson"
+output_map_path = "C:/Users/hakon/SnowAnalysis_JK/Output/Maps/municipality_map.png"
 
-# Extract reliability indices and coordinates
-reliability_indices = municipalities_df.set_index("Municipality")[["Beta"]].to_dict()["Beta"]
-locations = municipalities_df[["Municipality", "Latitude", "Longitude"]].values
+# Load municipality data from CSV
+municipality_list = []
+with open(csv_path, mode='r', encoding='utf-8') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        municipality_list.append((row["Municipality"], float(row["Latitude"]), float(row["Longitude"]), float(row["Beta"])))
 
-# Filter out NaN values
-reliability_indices = {k: v for k, v in reliability_indices.items() if not np.isnan(v)}
-locations = [loc for loc in locations if loc[0] in reliability_indices]
+df = pd.DataFrame(municipality_list, columns=["Municipality", "Latitude", "Longitude", "Beta"])
 
-
-# Normalize reliability indices for colormap
-norm = Normalize(vmin=min(reliability_indices.values()), vmax=5)
-
-colormap = plt.cm.RdYlGn  # Red-to-Green colormap
-
-# Assign colors based on reliability index
-location_colors = {name: colormap(norm(beta)) for name, beta in reliability_indices.items()}
-
-# Convert coordinates to UTM
+# Convert coordinates to UTM Zone 33 (EPSG:32633)
 transformer = Transformer.from_crs("EPSG:4326", "EPSG:32633", always_xy=True)
-utm_locations = [(name, *transformer.transform(lon, lat)) for name, lat, lon in locations]
+df["Easting"], df["Northing"] = zip(*df.apply(lambda row: transformer.transform(row["Longitude"], row["Latitude"]), axis=1))
 
-# Load Norway shapefile
-gdf = gpd.read_file("/Users/hakon/SnowAnalysis_JK/DataSources/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp")
-norway = gdf[gdf["ADMIN"] == "Norway"]
+# Load the GeoJSON file (only Kommune layer)
+gdf_kommune = gpd.read_file(geojson_path, layer="Kommune")
 
-# Create figure and axes
-fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={"projection": ccrs.UTM(33)})
-ax.set_extent([4.5, 31.0, 57.5, 71.2], crs=ccrs.PlateCarree())
+# Ensure correct CRS
+if gdf_kommune.crs is None:
+    gdf_kommune.set_crs(epsg=25833, inplace=True)
+elif gdf_kommune.crs.to_epsg() != 25833:
+    gdf_kommune.to_crs(epsg=25833, inplace=True)
 
-# Add map features
-ax.add_feature(cfeature.BORDERS, linestyle=":")
-ax.add_feature(cfeature.COASTLINE)
-norway.boundary.plot(ax=ax, color="blue", linewidth=1)
+# Find municipalities with the lowest and highest Beta
+min_beta_row = df.loc[df["Beta"].idxmin()]
+max_beta_row = df.loc[df["Beta"].idxmax()]
 
-# Plot municipalities
+# Define key municipalities to highlight
+highlight_municipalities = ["Oslo", "Bergen", "Trondheim - Tråante"]
+highlight_rows = df[df["Municipality"].isin(highlight_municipalities)]
 
-for name, x, y in utm_locations:
-    if name in reliability_indices:  # Double-check to avoid errors
-        beta_label = f"{reliability_indices[name]:.2f}" if reliability_indices[name] != 5 else ">5"
-        ax.plot(x, y, marker="o", color=location_colors[name], markersize=5, label=f"{name}: $\\beta$ = {beta_label}")
+# Normalize Beta values for colormap
+norm = Normalize(vmin=df["Beta"].min(), vmax=df["Beta"].max())
+colormap = plt.cm.RdYlGn  # Red-to-Green colormap
+df["Color"] = df["Beta"].apply(lambda beta: colormap(norm(beta)))
 
+# Find which municipality each point belongs to
+df["Geometry"] = df.apply(lambda row: gpd.points_from_xy([row["Easting"]], [row["Northing"]])[0], axis=1)
+df["Municipality_GDF"] = df.apply(lambda row: gdf_kommune[gdf_kommune.intersects(row["Geometry"])], axis=1)
+
+# Plot the GeoJSON data
+fig, ax = plt.subplots(figsize=(12, 8))
+gdf_kommune.plot(ax=ax, color='black', edgecolor='black', linewidth=0.5)  # White background, black borders
+
+# Color the selected municipalities
+for _, row in df.iterrows():
+    if not row["Municipality_GDF"].empty:
+        row["Municipality_GDF"].plot(ax=ax, color=row["Color"], edgecolor="black", linewidth=0.5)
 
 # Add colorbar
 sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
 cbar = plt.colorbar(sm, ax=ax, orientation="vertical", pad=0.05)
 cbar.set_label("Reliability Index ($\\beta$)")
 
-# Set title
-ax.set_title("Map of Norway with Locations Colored by Reliability Index")
+# Create custom legend handles
+legend_entries = [
+    (min_beta_row["Municipality"], min_beta_row["Beta"]),
+    (max_beta_row["Municipality"], max_beta_row["Beta"])
+] + list(zip(highlight_rows["Municipality"], highlight_rows["Beta"]))
 
-# Save and show plot
-output_path = "/Users/hakon/SnowAnalysis_JK/Output/Maps/norway_map_colored_by_Bf.png"
-plt.savefig(output_path, dpi=300, bbox_inches="tight")
+legend_handles = [
+    mpatches.Patch(color=colormap(norm(beta)), label=f"{mun} ({beta:.2f})")
+    for mun, beta in legend_entries
+]
+
+# Add legend at bottom-right
+ax.legend(handles=legend_handles, loc="lower right", fontsize=10, frameon=True)
+
+# Customize the map
+plt.title("Municipalities Colored by Reliability Index ($\\beta$)")
+plt.xlabel("Easting (meters)")
+plt.ylabel("Northing (meters)")
+plt.grid(True)
+
+# Ensure output directory exists
+os.makedirs(os.path.dirname(output_map_path), exist_ok=True)
+
+# Save the figure
+plt.savefig(output_map_path, dpi=300, bbox_inches="tight")
 plt.show()
