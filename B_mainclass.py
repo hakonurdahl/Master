@@ -34,13 +34,13 @@ class ZBETA:
         aq = self.aq
         deq=self.d              
         if deq == 0:
-            z = ((gk*g_g+pk*g_p*2)+qk*g_q)*g_r/(xrk*rk)
+            z = ((gk*g_g+pk*g_p)+qk*g_q)*g_r/(xrk*rk)
         elif deq == 1:
             xi = self.g['xi']       
             psi = self.g['psi']     
             z_alt = [0] * 2
-            z_alt[0]= ((gk*g_g+pk*g_p*2)+qk*psi*g_q)*g_r/(xrk*rk)
-            z_alt[1]= ((gk*g_g*xi+pk*g_p*xi)+qk*g_q*2)*g_r/(xrk*rk)
+            z_alt[0]= ((gk*g_g+pk*g_p)+qk*psi*g_q)*g_r/(xrk*rk)
+            z_alt[1]= ((gk*g_g*xi+pk*g_p*xi)+qk*g_q)*g_r/(xrk*rk)
             z=np.max(z_alt)
         return z
  

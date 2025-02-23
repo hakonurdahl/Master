@@ -37,6 +37,8 @@ def char(name):
     else:
         sk=min(sk_0+dsk*n, sk_maks)
 
+
+
     return sk
 
 
@@ -60,12 +62,13 @@ def municipality_form(name):   #Calculate beta
     # Compute mean and standard deviation
     mean_gumbel = loc + gamma * scale
     std_gumbel = (np.pi / np.sqrt(6)) * scale
-    mean_snow_=mean_gumbel*9.8*2/100 # Converting mm to kN/m
+    mean_snow_=mean_gumbel*9.8*2/1000 # Converting mm to kN/m
+
+    
+
     # Compute CoV
     cov_snow = std_gumbel / mean_gumbel
-
-    char_=char(name)
-
+    char_=char(name)*2
 
     X = prep.RandomVariablesAux(mean_snow_, cov_snow, char_)
 
@@ -87,5 +90,7 @@ def municipality_form(name):   #Calculate beta
     zet = form.ZBETA(ag=agg, aq=aqq, XR=XR_, R=R_, XX=XX_, G=G_, P=P_, XQ=XQ_, Q=Q_, g=g_, d=deq)
     z=zet.__zeta__()                    #find design variable z per single case
     BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
+
     return BETA,ALPHA
 
+municipality_form("Halden")

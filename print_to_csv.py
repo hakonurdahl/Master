@@ -220,5 +220,5 @@ def print_to_csv_map(start_municipality=None):
 
 #print_to_csv_swe()  #Run to update swe
 
-print_to_csv_map("Svelvik")  #Run to update map csv file
+print_to_csv_map()  #Run to update map csv file
 
