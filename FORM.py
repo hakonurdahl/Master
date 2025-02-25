@@ -1,6 +1,7 @@
 #Import 
 import numpy as np
 import scipy.stats as stats
+import scipy as sp
 
 import B_mainclass as form
 import C_Input_AHG as inp
@@ -90,7 +91,22 @@ def municipality_form(name):   #Calculate beta
     zet = form.ZBETA(ag=agg, aq=aqq, XR=XR_, R=R_, XX=XX_, G=G_, P=P_, XQ=XQ_, Q=Q_, g=g_, d=deq)
     z=zet.__zeta__()                    #find design variable z per single case
     BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
+    
+    #Calculate reliaiblity index with Monte Carlo instead of FORM
+    run_mcs=0
+    if run_mcs==1:
+        BETA_mcs=zet.mcstest(z)
+        return BETA_mcs
+
 
     return BETA,ALPHA
 
-municipality_form("Halden")
+municiaplities=["Lenvik", "Jondal", "Vestvågøy", "Bykle", "Kvalsund"]
+
+
+#for municipality in municiaplities:
+#    BETA_mcs=municipality_form(municipality)
+#    print( municipality,BETA_mcs)
+
+PF = sp.stats.norm.cdf(-6)
+print(PF)

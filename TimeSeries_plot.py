@@ -4,6 +4,7 @@ import numpy as np
 import os
 import glob
 from datetime import datetime
+import scipy.stats as stats
 
 # Define the input and output directories
 input_folder = '/Users/hakon/SnowAnalysis_JK/Output/Computations/'
@@ -38,6 +39,13 @@ max_swe_per_year = data.groupby('water_year', as_index=False).apply(
     lambda x: x.loc[x['swe'].idxmax()]
 ).reset_index(drop=True)
 
+loc, scale = stats.gumbel_r.fit(max_swe_per_year['swe'])
+
+
+gamma = 0.57722
+
+
+
 # Extract the station name from the CSV filename
 station_name = os.path.splitext(os.path.basename(csv_file))[0]
 
@@ -64,7 +72,7 @@ plt.plot(data['time'], data['swe'], label='Daily SWE', color='skyblue')
 plt.scatter(max_swe_per_year['time'], max_swe_per_year['swe'], color='red', label='Yearly Maxima')
 plt.xlabel('Date')
 plt.ylabel('SWE (mm)')
-plt.title(f'SWE Time Series (1958-2023) - {station_name}')
+plt.title(f'SWE Time Series (1958-2023) - Trondheim')
 plt.legend()
 plt.grid(True)
 

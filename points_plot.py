@@ -59,7 +59,7 @@ additional_points = [(59.26354351775349, 10.393496677073257), (59.26354351775349
 utm_points = [transformer_to_utm.transform(lon, lat) for lat, lon in additional_points]
 
 # Define bounds for a square aspect around municipality
-lon_offset, lat_offset = 0.05, 0.025
+lon_offset, lat_offset = 0.04, 0.02
 min_lon, max_lon = longitude_municipality - lon_offset, longitude_municipality + lon_offset
 min_lat, max_lat = latitude_municipality - lat_offset, latitude_municipality + lat_offset
 
@@ -102,14 +102,14 @@ ax.set_extent([min_x, max_x, min_y, max_y], crs=ccrs.UTM(33))
 
 # Plot additional points with blue dots
 for x, y in utm_points:
-    ax.plot(x, y, marker='o', color='blue', markersize=2, transform=ccrs.UTM(33))
+    ax.plot(x, y, marker='o', color='blue', markersize=3, transform=ccrs.UTM(33))
 
 # Plot municipality with a red dot
-ax.plot(x_municipality, y_municipality, marker='o', color='red', markersize=10, label='Chosen by ChatGPT', transform=ccrs.UTM(33))
+ax.plot(x_municipality, y_municipality, marker='o', color='red', markersize=15, label='Chosen by ChatGPT', transform=ccrs.UTM(33))
 #ax.text(x_municipality, y_municipality, 'Chosen by ChatGPT', fontsize=12, verticalalignment='bottom', transform=ccrs.UTM(33))
 
 # Plot closest point with a green dot
-ax.plot(x_municipality_close, y_municipality_close, marker='o', color='green', markersize=10, label='In SeNorge database', transform=ccrs.UTM(33))
+ax.plot(x_municipality_close, y_municipality_close, marker='o', color='green', markersize=15, label='In SeNorge database', transform=ccrs.UTM(33))
 #ax.text(x_municipality_close, y_municipality_close, 'In SeNorge database', fontsize=12, verticalalignment='bottom', transform=ccrs.UTM(33))
 
 
@@ -126,16 +126,24 @@ gl = ax.gridlines(draw_labels=False, dms=True, x_inline=False, y_inline=False)
 gl.top_labels = gl.right_labels = False
 
 # Set title
-ax.set_title('Map of Tønsberg')
+ax.set_title('Map of Tønsberg', fontsize=30)
 
-# Add legend
-ax.legend()
+import matplotlib.lines as mlines
+import matplotlib.legend_handler as mlegend
+
+# Create legend handles with smaller marker sizes
+red_dot = mlines.Line2D([], [], color='red', marker='o', markersize=12, linestyle='None', label='Chosen by ChatGPT')
+green_dot = mlines.Line2D([], [], color='green', marker='o', markersize=12, linestyle='None', label='In SeNorge database')
+
+# Add legend with smaller marker sizes
+ax.legend(handles=[red_dot, green_dot], loc='best', fontsize=25)
+
 
 # Adjust layout
 plt.tight_layout()
 
 # Save the map
-output_path = '/Users/hakon/SnowAnalysis_JK/Output/Maps/norway_map_with_points.png'
+output_path = '/Users/hakon/SnowAnalysis_JK/Output/Maps/tonsberg.pdf'
 plt.savefig(output_path, dpi=300, bbox_inches='tight') 
 
 
