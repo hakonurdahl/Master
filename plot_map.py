@@ -11,7 +11,7 @@ import matplotlib.patches as mpatches  # Import for custom legend patches
 # File paths
 csv_path = "C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_map.csv"
 geojson_path = "C:/Users/hakon/SnowAnalysis_JK/DataSources/Basisdata_0000_Norge_25833_Kommuner_GeoJSON/Basisdata_0000_Norge_25833_Kommuner_GeoJSON.geojson"
-output_map_path = "C:/Users/hakon/SnowAnalysis_JK/Output/Maps/municipality_map.png"
+output_map_path = "C:/Users/hakon/SnowAnalysis_JK/Output/Maps/municipality_map.pdf"
 
 # Load municipality data from CSV
 municipality_list = []

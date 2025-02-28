@@ -108,5 +108,5 @@ municiaplities=["Lenvik", "Jondal", "Vestvågøy", "Bykle", "Kvalsund"]
 #    BETA_mcs=municipality_form(municipality)
 #    print( municipality,BETA_mcs)
 
-PF = sp.stats.norm.cdf(-6)
-print(PF)
+#PF = sp.stats.norm.cdf(-2.4)
+#print(PF)
