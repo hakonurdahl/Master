@@ -31,10 +31,7 @@ def samples(name, ds):
     
 
     def closest(lat, lon):# Calculate the distance to  for each point in the SWE dataset
-        
-
-
-        
+                
 
         latitudes = ds['lat'].values
         longitudes = ds['lon'].values

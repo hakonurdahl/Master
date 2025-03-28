@@ -270,3 +270,4 @@ def get_values(csv_file_path, municipality_name,variable):
     # Return None if the municipality is not found
     print(f"No data found for municipality: {municipality_name}")
     return None
+

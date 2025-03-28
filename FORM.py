@@ -18,6 +18,7 @@ from A_funcstat import get_values
 # I also have trouble normalizing the characteristic value. a_q and a_g is chosen arbitrarily. 
 
 
+
 def char(name):
     
     sk_0=municipalities_data[name]['sk_0']
@@ -27,7 +28,7 @@ def char(name):
     latitude=municipalities_data[name]['coordinates']['latitude']
     longitude=municipalities_data[name]['coordinates']['longitude']
     
-    elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_elevation.csv',name, 'Elevation'))
+    elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/elevation.csv',name, 'Elevation'))
 
 
     n=max(ceil((elevation-hg)/100), 0)
@@ -44,10 +45,10 @@ def char(name):
 
 
 
-def municipality_form(name):   #Calculate beta
+def municipality_form(name, type):   #Calculate beta
 
 
-    snow_maxima=get_values('C:/Users/hakon/SnowAnalysis_JK/stored_data/municipalities_data_swe.csv', name, 'SWE')
+    snow_maxima=get_values(f'C:/Users/hakon/SnowAnalysis_JK/stored_data/swe_{type}.csv', name, 'SWE')
     
     
     #If the coordinate is in the sea or lake, there will be no values.
@@ -55,8 +56,10 @@ def municipality_form(name):   #Calculate beta
         return np.nan, np.nan
     
     
-    
-    loc, scale = stats.gumbel_r.fit(snow_maxima)
+    if np.sum(snow_maxima)<10:
+        loc, scale = 0.01, 0.01
+    else:
+        loc, scale = stats.gumbel_r.fit(snow_maxima)
 
     gamma = 0.57722  
 
@@ -93,15 +96,20 @@ def municipality_form(name):   #Calculate beta
     BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
     
     #Calculate reliaiblity index with Monte Carlo instead of FORM
-    run_mcs=0
-    if run_mcs==1:
+
+    if BETA==1:
+
         BETA_mcs=zet.mcstest(z)
-        return BETA_mcs
+        if BETA_mcs > 10:
+            return 10, ALPHA
+        
+        else:
+            return BETA_mcs, ALPHA
 
 
     return BETA,ALPHA
 
-municiaplities=["Lenvik", "Jondal", "Vestvågøy", "Bykle", "Kvalsund"]
+#municiaplities=["Lenvik", "Jondal", "Vestvågøy", "Bykle", "Kvalsund"]
 
 
 #for municipality in municiaplities:
@@ -110,3 +118,6 @@ municiaplities=["Lenvik", "Jondal", "Vestvågøy", "Bykle", "Kvalsund"]
 
 #PF = sp.stats.norm.cdf(-2.4)
 #print(PF)
+
+
+#print(municipality_form("Granvin", "future_rcp45"))

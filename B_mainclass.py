@@ -81,6 +81,9 @@ class ZBETA:
         k = lambda u: np.sqrt(gdiff[0](u)**2+gdiff[1](u)**2+gdiff[2](u)**2+gdiff[3](u)**2+gdiff[4](u)**2+gdiff[5](u)**2+gdiff[6](u)**2)
     
         anext = []
+
+        
+
         anext.append(lambda u: -gdiff[0](u)/k(u))
         anext.append(lambda u: -gdiff[1](u)/k(u))
         anext.append(lambda u: -gdiff[2](u)/k(u))
