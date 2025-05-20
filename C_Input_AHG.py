@@ -219,7 +219,7 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['X1']['mu'] = 309
     X['X1']['cov'] = 0.07
     X['X1']['fractile'] = '-'       #(absurd) fractile chosen such that char. value complies with value of 0.83, adopted in previous input (June 2021). Was this value adopted in the AHG calculations?
-    X['X1']['gm'] = 1.0
+    X['X1']['gm'] = 1.05
     X['X1']['char'] = 275
     #--------------------------------------------------------------------------
     X['X2'] = {}    
@@ -322,8 +322,8 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Y21']['dist'] = 'normal'             
     X['Y21']['mu'] = 1.0
     X['Y21']['cov'] = 0.025
-    X['Y21']['fractile'] = 'not used'
-    X['Y21']['char'] = 1.0                ## manual input for char. value               
+    X['Y21']['fractile'] = 0.95
+    X['Y21']['char'] = []               ## manual input for char. value               
     # --------------------------------------------------------------------
     X['Y22'] = {}    
     X['Y22']['name'] = 'Self weight concrete'
@@ -446,7 +446,7 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Z2']['fractile'] = 0.98                             # Not needed if char user-defined; otherwise it corresponds to T=Tr_bas if char_method = 0 and to T = max(Tref;Tr_bas) if char_method = 1
     X['Z2']['weight'] = 0.1
     X['Z2']['char_method'] = 0                             # Dummy variable that specifies the method for the determination of char: 0 - MC simulation of both time-dependant (Q) and independent (X_Q) contribution and subsequent determination of char based on specific fractile of the resulting joint variable (XQ*Q); 1 - char directly obtained based on Gumbel dsitribution for Q only (check that char of X_Q = 1.0!) 
-    X['Z2']['char'] = char                                   # Char. value may be user-defined
+    X['Z2']['char'] = char                                  # Char. value may be user-defined
     #--------------------------------------------------------------------------
     # Imposed___________________________________________
     X['Z31'] = {}   ## Time invariant## 

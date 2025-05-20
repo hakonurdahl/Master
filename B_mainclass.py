@@ -42,6 +42,7 @@ class ZBETA:
             z_alt[0]= ((gk*g_g+pk*g_p)+qk*psi*g_q)*g_r/(xrk*rk)
             z_alt[1]= ((gk*g_g*xi+pk*g_p*xi)+qk*g_q)*g_r/(xrk*rk)
             z=np.max(z_alt)
+
         return z
  
     

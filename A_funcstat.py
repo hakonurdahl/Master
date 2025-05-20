@@ -262,7 +262,7 @@ def get_values(csv_file_path, municipality_name,variable):
         
         for row in reader:
             # Check if the municipality name matches
-            if row["Municipality"] == municipality_name:
+            if row["municipality"] == municipality_name:
                 # Parse the values safely using ast.literal_eval()
                 values = ast.literal_eval(row[variable])
                 return values
@@ -270,4 +270,17 @@ def get_values(csv_file_path, municipality_name,variable):
     # Return None if the municipality is not found
     print(f"No data found for municipality: {municipality_name}")
     return None
+
+def closest(lat, lon, ds):# Calculate the distance to  for each point in the SWE dataset
+                
+
+        latitudes = ds['lat'].values
+        longitudes = ds['lon'].values
+        distances = np.sqrt((latitudes - lat)**2 + (longitudes - lon)**2)
+        min_dist_index = np.unravel_index(np.argmin(distances), distances.shape)
+
+        # Get the closest point coordinates
+        closest_lat = latitudes[min_dist_index]
+        closest_lon = longitudes[min_dist_index]
+        return closest_lat, closest_lon
 
