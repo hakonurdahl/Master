@@ -25,7 +25,7 @@ import plot_scatter
 
 ## Reliaiblity indices ##
 
-print_to_csv.print_to_csv_beta("tot")
+#print_to_csv.print_to_csv_beta("tot")
 
 #print_to_csv.print_to_csv_beta("old")
 
@@ -60,23 +60,21 @@ print_to_csv.print_to_csv_beta("tot")
 
 ## Plot ##
  
-plot_map.map("tot", "beta")
+#plot_map.map("tot", "beta")
 
-plot_map.map("new", "beta")
+#plot_map.map("new", "beta")
 
-plot_map.map("old", "beta")
+#plot_map.map("old", "beta", show_colorbar=False)
 
-plot_map.map("future_rcp45", "beta")
+#plot_map.map("future_rcp45", "beta")
 
-plot_map.map("future_rcp85", "beta")
+#plot_map.map("future_rcp85", "beta")
 
-plot_map.map("old", "diff_beta_new_beta")
+#plot_map.map("old", "diff_beta_new_beta")
 
-plot_map.map("tot", "opt_char")
+#plot_map.map("tot", "opt_char")
 
-plot_map.map("tot", "opt_beta")
-
-#plot_map.map("tot", "diff_char")
+#plot_map.map("tot", "opt_beta")
 
 plot_map.map("future_rcp45", "opt_char")
 
@@ -84,23 +82,23 @@ plot_map.map("future_rcp85", "opt_char")
 
 plot_map.map("tot", "cov")
 
-#plot_scatter.scatter_gumbel("tot")
+plot_scatter.scatter("tot")
 
-#plot_scatter.scatter_gumbel("new")
+plot_scatter.scatter("new")
 
-#plot_scatter.scatter_gumbel("old")
+plot_scatter.scatter("old")
 
-#plot_scatter.scatter_gumbel("future_rcp45")
+plot_scatter.scatter("future_rcp45")
 
-#plot_scatter.scatter_gumbel("future_rcp85")
+plot_scatter.scatter("future_rcp85")
 
-#plot_scatter.scatter_char_violin("tot")
-#plot_scatter.scatter_char_box("tot")
+plot_scatter.scatter_char_violin("tot")
+plot_scatter.scatter_char_box("tot")
 
 
 
-#plot_scatter.scatter_char_violin("future_rcp45")
-#plot_scatter.scatter_char_box("future_rcp45")
+plot_scatter.scatter_char_violin("future_rcp45")
+plot_scatter.scatter_char_box("future_rcp45")
 
-#plot_scatter.scatter_char_violin("future_rcp85")
-#plot_scatter.scatter_char_box("future_rcp85")
+plot_scatter.scatter_char_violin("future_rcp85")
+plot_scatter.scatter_char_box("future_rcp85")

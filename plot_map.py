@@ -8,6 +8,14 @@ from pyproj import Transformer
 from matplotlib.colors import Normalize
 import matplotlib.patches as mpatches  # Import for custom legend patches
 import ast
+from matplotlib import rcParams
+rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Computer Modern Roman"],  # Matches LaTeX default
+    "axes.formatter.use_mathtext": True
+})
+
 
 input_data = {
 
@@ -21,18 +29,18 @@ input_data = {
 
     #Variable
 
-    "beta": {"limits": (2.5,6),"label": "Reliability Index ($\\beta$)", "title": "Municipalities Colored by Reliability Index ($\\beta$)"},
-    "opt_beta": {"limits": (2.5,6),"label": "Reliability Index ($\\beta$)", "title": "Municipalities Colored by Reliability Index ($\\beta$)"},
-    "char": {"limits": (0, 10),"label": "Characteristic Value", "title": "Municipalities Colored by Characteristic Value"},
-    "cov": {"limits": (0.3,0.8),"label": "Coefficient of Variance", "title": "Municipalities Colored by Coefficient of Variance"},
-    "opt_char": {"limits": (0,10),"label": "Optimal Characteristic Value", "title": "Municipalities Colored by Optimal Characteristic Value"},
-    "diff_beta_new_beta": {"limits": (-2,2),"label": "$\\Delta$Reliability Index ($\\beta$)", "title": "Municipalities Colored by Change in Reliability Index"}
+    "beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
+    "opt_beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
+    "char": {"limits": (0, 6),"label": "Characteristic Value", "title": "Characteristic Value by Municipalities"},
+    "cov": {"limits": (0.3,0.8),"label": "Coefficient of Variance", "title": "Coefficient of Variance by Municipalities"},
+    "opt_char": {"limits": (0,6),"label": "Optimal Characteristic Value", "title": "Optimal Characteristic Value by Municipalities "},
+    "diff_beta_new_beta": {"limits": (-2,2),"label": "$\\Delta$Reliability Index ($\\beta$)", "title": "Change in Reliability Index by Municipalities"}
 }
 
 
-def map(period, variable):
+def map(period, variable, show_colorbar=True):
     # === Font size control for both title and legend ===
-    map_fontsize = 10
+    fontsize_ = 20
 
     limits = input_data[variable]["limits"]
     label_ = input_data[variable]["label"]
@@ -114,20 +122,31 @@ def map(period, variable):
         print("-", name)
 
     # === Plotting ===
-    fig, ax = plt.subplots(figsize=(12, 8))
-    plt.title(title_, fontsize=map_fontsize)
+    # Consistent map area
+    fig = plt.figure(figsize=(6.3, 8))
+    ax = fig.add_axes([0.0, 0.05, 0.9, 0.9])  # [left, bottom, width, height]
+    #ax = fig.add_axes([0.001, 0.01, 0.87, 0.98])  # [left, bottom, width, height]
+    
+    
+    ax.set_title(title_, fontsize=fontsize_)
 
-    gdf_kommune.plot(ax=ax, color='grey', edgecolor=None, linewidth=0.0)
+    gdf_kommune.plot(ax=ax, color='white', edgecolor=None, linewidth=0.0)
 
     for _, row in df.iterrows():
         if not row["Municipality_GDF"].empty:
             row["Municipality_GDF"].plot(ax=ax, color=row["Color"], edgecolor=None, linewidth=0.0)
 
-    # Colorbar
-    sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
-    cbar = plt.colorbar(sm, ax=ax, orientation="vertical", pad=0.05)
-    cbar.set_label(label_, fontsize=map_fontsize)
-    cbar.ax.tick_params(labelsize=map_fontsize)
+    # Optional colorbar
+    if show_colorbar:
+        cax = fig.add_axes([0.9, 0.055, 0.02, 0.89])  # fixed position for colorbar
+        sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
+        cbar = fig.colorbar(sm, cax=cax)
+        cbar.set_label(label_, fontsize=fontsize_-2, labelpad=20, rotation=90)
+        cbar.ax.yaxis.set_label_position('left')  # Moves label to the left of the colorbar
+        cbar.ax.tick_params(labelsize=fontsize_-3)
+
+
+
 
     # Custom legend
     legend_entries = [
@@ -135,12 +154,27 @@ def map(period, variable):
         (max_beta_row["municipality"], max_beta_row["var"])
     ] + list(zip(highlight_rows["municipality"], highlight_rows["var"]))
 
+    from matplotlib.lines import Line2D
+
     legend_handles = [
-        mpatches.Patch(color=colormap(norm(beta)), label=f"{mun} ({beta:.2f})")
+        Line2D([0], [0],
+            marker='o',
+            color='w',
+            label=f"{mun} ({beta:.1f})",
+            markerfacecolor=colormap(norm(beta)),
+            markersize=10)
         for mun, beta in legend_entries
     ]
 
-    ax.legend(handles=legend_handles, loc="lower right", fontsize=map_fontsize, frameon=True)
+
+    ax.legend(
+        handles=legend_handles,
+        loc="lower right",
+        fontsize=fontsize_-2,
+        frameon=True,
+        handletextpad=0.001  # smaller value = smaller gap
+    )
+
 
     # === Remove grid and axis details ===
     ax.grid(False)
@@ -151,9 +185,10 @@ def map(period, variable):
 
     # === Save ===
     os.makedirs(os.path.dirname(output_map_path_1), exist_ok=True)
-    plt.savefig(output_map_path_1, dpi=300, bbox_inches="tight")
-    plt.savefig(output_map_path_2, dpi=300, bbox_inches="tight")
+    #plt.savefig(output_map_path_1, dpi=300)
+    plt.savefig(output_map_path_2, dpi=300)
     #plt.show()
 
-
-#plot_map("tot", "beta")
+#map("tot", "beta")
+#map("old", "beta", show_colorbar=False)
+#map("new", "beta")

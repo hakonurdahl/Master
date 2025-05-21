@@ -4,17 +4,55 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 from sklearn.linear_model import LinearRegression
+from matplotlib import rcParams
+rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Computer Modern Roman"],  # Matches LaTeX default
+    "axes.formatter.use_mathtext": True,
+    "text.latex.preamble": r"\usepackage{lmodern}",
+})
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import ast
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+import seaborn as sns
+import statsmodels.api as sm
 
 
+input_data = {
 
-def scatter_gumbel(time):
+    #Period
+
+    "tot": {"period": (1960, 2024), "scenario": None},
+    "new": {"period": (1991, 2024),"scenario": None},
+    "old": {"period": (1960, 1990),"scenario": None},
+    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45"},
+    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85"},
+
+    #Variable
+
+    "beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
+    "opt_beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
+    "char": {"limits": (0, 6),"label": "Characteristic Value", "title": "Characteristic Value by Municipalities"},
+    "cov": {"limits": (0.3,0.8),"label": "Coefficient of Variance", "title": "Coefficient of Variance by Municipalities"},
+    "opt_char": {"limits": (0,6),"label": "Optimal Characteristic Value", "title": "Optimal Characteristic Value by Municipalities "},
+    "diff_beta_new_beta": {"limits": (-2,2),"label": "$\\Delta$Reliability Index ($\\beta$)", "title": "Change in Reliability Index by Municipalities"}
+}
+
+
+def scatter(time):
+    fontsize_ = 25
+
     # File paths
     beta_file = f"stored_data/beta_{time}.csv"
     swe_file = f"stored_data/swe_{time}.csv"
 
     output_folder = f"/Users/hakon/SnowAnalysis_HU/Output/main_output/"
-    output_mean_file = output_folder + f"mean_scatter_{time}.png"
-    output_cov_file = output_folder + f"cov_scatter_{time}.png"
+    output_combined_file = output_folder + f"scatter_{time}.png"
 
     # Load data
     beta_df = pd.read_csv(beta_file)
@@ -38,82 +76,76 @@ def scatter_gumbel(time):
 
     # Compute Gumbel mean and CoV
     def compute_gumbel_params(swe_list):
-
-        if np.sum(swe_list)<10:
+        if np.sum(swe_list) < 10:
             loc, scale = 0.01, 0.01
         else:
             loc, scale = stats.gumbel_r.fit(swe_list)
 
-        gamma = 0.57722  
-
-        # Compute mean and standard deviation
-        mean_gumbel = loc + gamma * scale
+        mean_gumbel = loc + GAMMA * scale
         std_gumbel = (np.pi / np.sqrt(6)) * scale
-        mean_snow_=mean_gumbel*9.8*2/1000 # Converting mm to kN/m
-
-        # Compute CoV
+        mean_snow_ = mean_gumbel * 9.8 * 2 / 1000  # mm -> kN/m^2
         cov_snow = std_gumbel / mean_gumbel
-        
-        return mean_snow_, cov_snow
 
+        return mean_snow_, cov_snow
 
     swe_df[["SWE_Gumbel_Mean", "SWE_Gumbel_CoV"]] = swe_df["swe"].apply(lambda x: pd.Series(compute_gumbel_params(x)))
 
     # Merge datasets
     merged_df = swe_df.join(beta_df, how="inner").dropna(subset=["SWE_Gumbel_Mean", "SWE_Gumbel_CoV", "var"])
+    merged_df = merged_df[merged_df["var"] != 10]
 
-    # === Plot 1: Reliability vs. Gumbel Mean ===
-    plt.figure(figsize=(8, 6))
-    plt.scatter(
+
+    # === Remove Mean Effect ===
+    X_mean = merged_df[["SWE_Gumbel_Mean"]]
+    y_reliability = merged_df["var"]
+    model_mean = LinearRegression()
+    model_mean.fit(X_mean, y_reliability)
+    merged_df["Residual_Reliability"] = y_reliability - model_mean.predict(X_mean)
+
+    # === Create Subplots ===
+    fig, axs = plt.subplots(1, 2, figsize=(14, 6), sharey=False)  # sharey=True if axes should align
+
+    # --- Plot 1: Reliability vs. Mean ---
+    axs[0].scatter(
         merged_df["SWE_Gumbel_Mean"],
         merged_df["var"],
         s=20,
         alpha=1
     )
-    plt.axhline(y=3.8, color='red', linestyle='dashed', linewidth=1.5, label="Reliability target = 3.8")
-    plt.xlabel("Gumbel Mean of SWE", fontsize=20)
-    plt.ylabel("Reliability Index", fontsize=20)
-    plt.xticks(fontsize=10)
-    plt.yticks(fontsize=10)
-    plt.title("Reliability Index vs. Gumbel Mean of SWE", fontsize=20)
-    plt.grid(True)
-    plt.legend(fontsize=20)
-    plt.savefig(output_mean_file, format="png", bbox_inches="tight")
-    print(f"Mean plot saved successfully at: {output_mean_file}")
+    axs[0].axhline(y=3.8, color='red', linestyle='dashed', linewidth=1.5, label="Reliability target = 3.8")
+    axs[0].set_xlabel("Gumbel Mean of SWE", fontsize=fontsize_-3)
+    axs[0].set_ylabel("Reliability Index", fontsize=fontsize_-3)
+    axs[0].set_title(f"Reliability Index vs. Gumbel Mean {str(input_data[time]["period"])}", fontsize=fontsize_)
+    axs[0].tick_params(labelsize=fontsize_-5)
+    axs[0].grid(True)
+    axs[0].legend(fontsize=fontsize_-3)
 
-    # === Remove effect of Mean ===
-    X_mean = merged_df[["SWE_Gumbel_Mean"]]
-    y_reliability = merged_df["var"]
-
-    model_mean = LinearRegression()
-    model_mean.fit(X_mean, y_reliability)
-    merged_df["Residual_Reliability"] = y_reliability - model_mean.predict(X_mean)
-
-    # === Plot 2: Residual Reliability vs. CoV (No Grouping, Matched Style) ===
-    plt.figure(figsize=(8, 6))
-    plt.scatter(
+    # --- Plot 2: Residual vs. CoV ---
+    axs[1].scatter(
         merged_df["SWE_Gumbel_CoV"],
         merged_df["Residual_Reliability"],
         s=20,
         alpha=1
     )
+    axs[1].set_xlabel("CoV", fontsize=fontsize_-3)
+    axs[1].set_ylabel("$\\beta$", fontsize=fontsize_-3)
+    axs[1].set_title(f"Residual Reliability vs. CoV {str(input_data[time]["period"])}", fontsize=fontsize_)
+    axs[1].tick_params(labelsize=fontsize_-5)
+    axs[1].grid(True)
 
-    plt.xlabel("Gumbel Coefficient of Variation (CoV)", fontsize=20)
-    plt.ylabel("Residual Reliability Index", fontsize=20)
-    plt.xticks(fontsize=10)
-    plt.yticks(fontsize=10)
-    plt.title("Residual Reliability vs. CoV of SWE", fontsize=20)
-    plt.grid(True)
-    plt.savefig(output_cov_file, format="png", bbox_inches="tight")
-    #plt.show()
+    # Tight layout to avoid overlap
+    plt.tight_layout()
 
-    print(f"CoV plot saved successfully at: {output_cov_file}")
+    # Save combined plot
+    plt.savefig(output_combined_file, dpi=300)
+    print(f"Combined scatter plot saved at: {output_combined_file}")
 
 
 
-import seaborn as sns
+
 
 def scatter_char_box(time):
+    fontsize_ = 25
     # Load data
     ec_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/char_ec.csv"
     opt_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/opt_char_{time}.csv"
@@ -139,6 +171,8 @@ def scatter_char_box(time):
     # Plot
     plt.figure(figsize=(10, 6))
     sns.boxplot(x="Char_EC", y="Char_opt", data=merged_df, palette="Set3")
+    #sns.boxplot(x="Char_EC", y="Char_opt", data=merged_df, hue="Char_EC", palette="Set3", inner="box", legend=False)
+
 
     # Add 1:1 line
     unique_ec = sorted(merged_df["Char_EC"].unique())
@@ -147,9 +181,12 @@ def scatter_char_box(time):
     plt.legend()
 
 
-    plt.xlabel("Prescribed Characteristic Value", fontsize=14)
-    plt.ylabel("Optimal Characteristic Value", fontsize=14)
-    plt.title("Distribution of Optimal Values by Prescribed Characteristic Value", fontsize=16)
+    plt.xlabel("Prescribed Characteristic Value", fontsize=fontsize_)
+    plt.ylabel("Optimal Characteristic Value", fontsize=fontsize_)
+    plt.title(f"Distribution of Optimal Values by Prescribed Characteristic Value {str(input_data[time]["period"])}", fontsize=fontsize_)
+    plt.xticks(fontsize=fontsize_-5)
+    plt.yticks(fontsize=fontsize_-5)
+
     plt.grid(True, axis='y')
     plt.tight_layout()
     plt.savefig(output_path, format="png", bbox_inches="tight")
@@ -158,48 +195,80 @@ def scatter_char_box(time):
     print(f"Plot saved to: {output_path}")
 
 
+
+
 def scatter_char_violin(time):
-    # Load data
+    fontsize_ = 25
+    # File paths
     ec_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/char_ec.csv"
     opt_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/opt_char_{time}.csv"
     output_path = f"/Users/hakon/SnowAnalysis_HU/Output/main_output/scatter_char_violin_{time}.png"
 
+    # Load data
     ec_df = pd.read_csv(ec_path)
     opt_df = pd.read_csv(opt_path)
-
-    # Set Municipality as index
     ec_df.set_index("municipality", inplace=True)
     opt_df.set_index("municipality", inplace=True)
 
-    # Merge with suffixes
+    # Merge and prepare
     merged_df = ec_df.join(opt_df, how="inner", lsuffix="_EC", rsuffix="_opt")
     merged_df.rename(columns={"var_EC": "Char_EC", "var_opt": "Char_opt"}, inplace=True)
-
-    # Drop missing values
     merged_df.dropna(subset=["Char_EC", "Char_opt"], inplace=True)
-
-    # Convert Char_EC to categorical (grouping for violin plot)
     merged_df["Char_EC"] = merged_df["Char_EC"].round(2)
 
+    # Prepare data for beanplot
+    categories = sorted(merged_df["Char_EC"].unique())
+
+    # Prepare data for beanplot (skip groups with < 2 values)
+    grouped = merged_df.groupby("Char_EC")["Char_opt"].apply(list)
+    filtered = grouped[grouped.apply(lambda x: len(x) >= 2)]
+    data_for_plot = filtered.tolist()
+    category_labels = [str(cat) for cat in filtered.index]
+
+
     # Plot
-    plt.figure(figsize=(10, 6))
-    sns.violinplot(x="Char_EC", y="Char_opt", data=merged_df, palette="Set3", inner="box")
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.set_ylim(0, 20)
+    ax.grid(axis='y')
 
-    # Add 1:1 line
-    unique_ec = sorted(merged_df["Char_EC"].unique())
-    tick_positions = range(len(unique_ec))
-    plt.plot(tick_positions, unique_ec, linestyle="--", color="gray", label="1:1 Line")
-    plt.legend()
+    plot_opts = {
+        "cutoff": True,
+        "cutoff_type": "abs",
+        "cutoff_val": 0,
+        "violin_fc": (0.7, 0.7, 0.7),
+        "label_rotation": 90,
+        "bean_show_mean": True,
+        "bean_show_median": False,
+        "jitter_marker": '.',
+        "jitter_marker_size": 1.0,
+        "bean_legend_text": "Optimal Characteristic Value"
+    }
 
-    plt.xlabel("Prescribed Characteristic Value", fontsize=14)
-    plt.ylabel("Optimal Characteristic Value", fontsize=14)
-    plt.title("Distribution of Optimal Values by Prescribed Characteristic Value", fontsize=16)
-    plt.grid(True, axis='y')
+    sm.graphics.beanplot(data_for_plot, ax=ax, labels=category_labels,
+                         jitter=True, plot_opts=plot_opts)
+    
+    # Add 1:1 red dashed line manually
+    # Replace x0, y0 and xn, yn with your actual start and end points
+    x0, y0 = 1, 1.5     # First violin's position and value
+    xn, yn = 12,7.5  # Last violin's position and value
+
+    ax.plot([x0, xn], [y0, yn], linestyle="--", color="red", label="1:1 Line")
+    ax.legend()
+
+
+    ax.set_xlabel("Prescribed Characteristic Value", fontsize=fontsize_-3)
+    ax.set_ylabel("Optimal Characteristic Value", fontsize=fontsize_-3)
+    ax.set_title(f"Distribution of Optimal Values by Prescribed Characteristic Value {str(input_data[time]["period"])}", fontsize=fontsize_)
+    ax.tick_params(axis='x', labelsize=fontsize_ - 5)
+    ax.tick_params(axis='y', labelsize=fontsize_ - 5)
+
     plt.tight_layout()
-    plt.savefig(output_path, format="png", bbox_inches="tight")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     #plt.show()
 
     print(f"Plot saved to: {output_path}")
+
+
 
 
     
@@ -208,3 +277,4 @@ def scatter_char_violin(time):
 #Test
 #scatter_char_box("tot")
 #scatter_char_violin("tot")
+#scatter("future_rcp45")
