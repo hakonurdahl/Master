@@ -10,18 +10,6 @@ import requests
 
 
 
-# The measurements from SeNorge is done over a square kilometer, which means the area can have large differences in elevation.
-# Snow is very dependent on elevation. There is more snow on higher altitudes. 
-# Since the reliaiblity analysis is reliant on a characteristic value for snow load the elevation plays a major role.
-# To deal with this, elevation_points.py locates a grid of points that is within this square kilometer.
-# The elevation can then be found for each of these points in elevation.py. Then the characteristic load calculation can
-# for example use the average value for elevation. The method for finding these points is to first find the center of the square.
-# The center of all squares is the point listed in the data set. So when a point is found in this data set it is the center.
-# Then a grid of points around the center is generated and if the generated point is closest to the center in question it is 
-# appended to the list of coordinates. This list will then contain all the points included in the measurement of snow.
-# The function that finds the point closest to a coordinate uses a "brute force" method, because the more efficient "nearest" method 
-# gave wrong results. 
-
 # A function that find the coordinates of a place from https://nominatim.openstreetmap.org
 def get_coordinates(building_name):
     url = "https://nominatim.openstreetmap.org/search"
@@ -46,7 +34,7 @@ def get_coordinates(building_name):
         return None
 
 
-def coordinates(name, ds):
+def coordinates(name, ds, save_all_attempts=False):
 
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:32633", always_xy=True)
     to_latlon = Transformer.from_crs("EPSG:32633", "EPSG:4326", always_xy=True)
@@ -111,6 +99,11 @@ def coordinates(name, ds):
     lon_grid, lat_grid = np.meshgrid(longitudes, latitudes)
     distances = np.sqrt((lat_grid - y_)**2 + (lon_grid - x_)**2)
     closest_indices = np.unravel_index(np.argsort(distances, axis=None)[:21], distances.shape)
+    
+    
+    if save_all_attempts:
+        attempted_points = []
+        attempted_points.append((latitude, longitude))
 
     for j in range(21):
         y_nearest = lat_grid[closest_indices[0][j], closest_indices[1][j]]
@@ -119,10 +112,16 @@ def coordinates(name, ds):
         swe_at_point = snow_water_equivalent.sel(Yc=y_nearest, Xc=x_nearest, method='nearest')
         swe_array = swe_at_point.values
 
+        # Convert back to lat/lon
+        actual_lon, actual_lat = to_latlon.transform(x_nearest, y_nearest)
+
+        if save_all_attempts:
+            attempted_points.append((actual_lat, actual_lon))
+
         if not np.isnan(swe_array).all():
             actual_lon, actual_lat = to_latlon.transform(x_nearest, y_nearest)      
-            #print("j=",j)      
-            #print(f"{name} has updated coordinates: lat= {actual_lat}, lon= {actual_lon}")
+            if save_all_attempts:
+                return attempted_points
             break
 
     coordinate_samples=[]
@@ -157,7 +156,7 @@ def coordinates(name, ds):
 
 
 #Test
-test_run = 0
+test_run = 1
 
 if test_run==1:
     #opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
@@ -174,8 +173,8 @@ if test_run==1:
 
 
 
-    test_mun = "Nesseby"
-
-    print(test_mun + ',' + '"' + str(coordinates(test_mun, ds_)) + '"')
+    test_mun = "Farsund"
+    print(coordinates(test_mun, ds_, save_all_attempts=True))
+    #print(test_mun + ',' + '"' + str(coordinates(test_mun, ds_, save_all_attempts=True)) + '"')
 
 

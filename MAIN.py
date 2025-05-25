@@ -60,21 +60,21 @@ import plot_scatter
 
 ## Plot ##
  
-#plot_map.map("tot", "beta")
+plot_map.map("tot", "beta")
 
-#plot_map.map("new", "beta")
+plot_map.map("new", "beta")
 
-#plot_map.map("old", "beta", show_colorbar=False)
+plot_map.map("old", "beta", show_colorbar=False)
 
-#plot_map.map("future_rcp45", "beta")
+plot_map.map("future_rcp45", "beta")
 
-#plot_map.map("future_rcp85", "beta")
+plot_map.map("future_rcp85", "beta")
 
-#plot_map.map("old", "diff_beta_new_beta")
+plot_map.map("new_old", "diff_beta")
 
-#plot_map.map("tot", "opt_char")
+plot_map.map("tot", "opt_char")
 
-#plot_map.map("tot", "opt_beta")
+plot_map.map("tot", "opt_beta")
 
 plot_map.map("future_rcp45", "opt_char")
 

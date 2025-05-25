@@ -21,36 +21,39 @@ input_data = {
 
     #Period
 
-    "tot": {"period": (1960, 2024), "scenario": None},
-    "new": {"period": (1991, 2024),"scenario": None},
-    "old": {"period": (1960, 1990),"scenario": None},
-    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45"},
-    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85"},
+    "tot": {"period": (1960, 2024), "scenario": None, "title":"1960-2024"},
+    "new": {"period": (1991, 2024),"scenario": None, "title":"1991-2024"},
+    "old": {"period": (1960, 1990),"scenario": None, "title":"1960-1990"},
+    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45", "title":"2024-2074 RCP 4.5"},
+    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85", "title":"2024-2074 RCP 8.5"},
+    "new_old": {"period": ("", ""),"scenario": None, "title":""},
+    
 
     #Variable
-
-    "beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
-    "opt_beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
-    "char": {"limits": (0, 6),"label": "Characteristic Value", "title": "Characteristic Value by Municipalities"},
-    "cov": {"limits": (0.3,0.8),"label": "Coefficient of Variance", "title": "Coefficient of Variance by Municipalities"},
-    "opt_char": {"limits": (0,6),"label": "Optimal Characteristic Value", "title": "Optimal Characteristic Value by Municipalities "},
-    "diff_beta_new_beta": {"limits": (-2,2),"label": "$\\Delta$Reliability Index ($\\beta$)", "title": "Change in Reliability Index by Municipalities"}
+    #'My Title\n' + r'$\alpha - \omega$ are LaTeX Markup'
+    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
+    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
+    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value by Municipalities\n"},
+    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance by Municipalities\n"},
+    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Value by Municipalities\n"},
+    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index by Municipalities"}
 }
 
 
-def map(period, variable, show_colorbar=True):
+def map(time, variable, show_colorbar=True):
     # === Font size control for both title and legend ===
     fontsize_ = 20
 
     limits = input_data[variable]["limits"]
     label_ = input_data[variable]["label"]
-    title_ = input_data[variable]["title"]
+    title_ = f"{input_data[variable]['title']} {input_data[time]['title']}"
+
 
     # File paths
     geojson_path = "C:/Users/hakon/SnowAnalysis_HU/DataSources/Basisdata_0000_Norge_25833_Kommuner_GeoJSON/Basisdata_0000_Norge_25833_Kommuner_GeoJSON.geojson"
-    output_map_path_1 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{period}.pdf"
-    output_map_path_2 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{period}.png"
-    var_csv_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/{variable}_{period}.csv"
+    output_map_path_1 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{time}.pdf"
+    output_map_path_2 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{time}.png"
+    var_csv_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/{variable}_{time}.csv"
     points_csv_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/points.csv"
 
     # Load data
@@ -110,21 +113,24 @@ def map(period, variable, show_colorbar=True):
     df["Geometry"] = df.apply(lambda row: gpd.points_from_xy([row["Easting"]], [row["Northing"]])[0], axis=1)
     df["Municipality_GDF"] = df.apply(lambda row: gdf_kommune[gdf_kommune.intersects(row["Geometry"])], axis=1)
 
-    municipalities_with_points = set()
-    for matched in df["Municipality_GDF"]:
-        municipalities_with_points.update(matched["kommunenavn"].tolist())
+    run_missing = 0
 
-    all_municipalities = set(gdf_kommune["kommunenavn"])
-    municipalities_without_points = all_municipalities - municipalities_with_points
+    if run_missing == 1:
+        municipalities_with_points = set()
+        for matched in df["Municipality_GDF"]:
+            municipalities_with_points.update(matched["kommunenavn"].tolist())
 
-    print("Municipalities without any data points:")
-    for name in sorted(municipalities_without_points):
-        print("-", name)
+        all_municipalities = set(gdf_kommune["kommunenavn"])
+        municipalities_without_points = all_municipalities - municipalities_with_points
+
+        print("Municipalities without any data points:")
+        for name in sorted(municipalities_without_points):
+            print("-", name)
 
     # === Plotting ===
     # Consistent map area
     fig = plt.figure(figsize=(6.3, 8))
-    ax = fig.add_axes([0.0, 0.05, 0.9, 0.9])  # [left, bottom, width, height]
+    ax = fig.add_axes([0.0, 0.02, 0.89, 0.9])  # [left, bottom, width, height]
     #ax = fig.add_axes([0.001, 0.01, 0.87, 0.98])  # [left, bottom, width, height]
     
     
@@ -138,7 +144,7 @@ def map(period, variable, show_colorbar=True):
 
     # Optional colorbar
     if show_colorbar:
-        cax = fig.add_axes([0.9, 0.055, 0.02, 0.89])  # fixed position for colorbar
+        cax = fig.add_axes([0.89, 0.025, 0.02, 0.89])  # fixed position for colorbar
         sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
         cbar = fig.colorbar(sm, cax=cax)
         cbar.set_label(label_, fontsize=fontsize_-2, labelpad=20, rotation=90)
@@ -170,7 +176,7 @@ def map(period, variable, show_colorbar=True):
     ax.legend(
         handles=legend_handles,
         loc="lower right",
-        fontsize=fontsize_-2,
+        fontsize=fontsize_-3,
         frameon=True,
         handletextpad=0.001  # smaller value = smaller gap
     )
@@ -191,4 +197,5 @@ def map(period, variable, show_colorbar=True):
 
 #map("tot", "beta")
 #map("old", "beta", show_colorbar=False)
-#map("new", "beta")
+#map("tot", "opt_char")
+#map("future_rcp45", "beta")

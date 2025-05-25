@@ -1,7 +1,4 @@
 
-# A directory of variables needed in the calculation mostly written by ChatGPT. All variables are collected from screenshots from the standard, except
-# coordinates which chatGPT found on the internet. All values are not checked. Some test are done randomly. It is not finished.
-
 
 municipalities_data = {
 

@@ -27,20 +27,22 @@ input_data = {
 
     #Period
 
-    "tot": {"period": (1960, 2024), "scenario": None},
-    "new": {"period": (1991, 2024),"scenario": None},
-    "old": {"period": (1960, 1990),"scenario": None},
-    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45"},
-    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85"},
+    "tot": {"period": (1960, 2024), "scenario": None, "title":"1960-2024"},
+    "new": {"period": (1991, 2024),"scenario": None, "title":"1991-2024"},
+    "old": {"period": (1960, 1990),"scenario": None, "title":"1960-1990"},
+    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45", "title":"2024-2074 RCP 4.5"},
+    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85", "title":"2024-2074 RCP 8.5"},
+    "new_old": {"period": ("", ""),"scenario": None, "title":""},
+    
 
     #Variable
-
-    "beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
-    "opt_beta": {"limits": (2,6),"label": "Reliability Index ($\\beta$)", "title": "Reliability Index by Municipalities"},
-    "char": {"limits": (0, 6),"label": "Characteristic Value", "title": "Characteristic Value by Municipalities"},
-    "cov": {"limits": (0.3,0.8),"label": "Coefficient of Variance", "title": "Coefficient of Variance by Municipalities"},
-    "opt_char": {"limits": (0,6),"label": "Optimal Characteristic Value", "title": "Optimal Characteristic Value by Municipalities "},
-    "diff_beta_new_beta": {"limits": (-2,2),"label": "$\\Delta$Reliability Index ($\\beta$)", "title": "Change in Reliability Index by Municipalities"}
+    #'My Title\n' + r'$\alpha - \omega$ are LaTeX Markup'
+    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
+    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
+    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value by Municipalities\n"},
+    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance by Municipalities\n"},
+    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Value by Municipalities\n"},
+    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index by Municipalities"}
 }
 
 
@@ -112,10 +114,19 @@ def scatter(time):
         s=20,
         alpha=1
     )
+
+    if input_data[time]['scenario'] == None:
+        string = ""
+    elif input_data[time]['scenario'] == "rcp45":
+        string = "RCP 4.5"
+    else:
+        string = "RCP 8.5"
+
+
     axs[0].axhline(y=3.8, color='red', linestyle='dashed', linewidth=1.5, label="Reliability target = 3.8")
-    axs[0].set_xlabel("Gumbel Mean of SWE", fontsize=fontsize_-3)
+    axs[0].set_xlabel("Mean [$kN/m^2$]", fontsize=fontsize_-3)
     axs[0].set_ylabel("Reliability Index", fontsize=fontsize_-3)
-    axs[0].set_title(f"Reliability Index vs. Gumbel Mean {str(input_data[time]["period"])}", fontsize=fontsize_)
+    axs[0].set_title(f"Reliability Index vs. Mean\n {input_data[time]['title']}", fontsize=fontsize_)
     axs[0].tick_params(labelsize=fontsize_-5)
     axs[0].grid(True)
     axs[0].legend(fontsize=fontsize_-3)
@@ -128,15 +139,25 @@ def scatter(time):
         alpha=1
     )
     axs[1].set_xlabel("CoV", fontsize=fontsize_-3)
-    axs[1].set_ylabel("$\\beta$", fontsize=fontsize_-3)
-    axs[1].set_title(f"Residual Reliability vs. CoV {str(input_data[time]["period"])}", fontsize=fontsize_)
+    axs[1].set_ylabel("Residual Reliability Index", fontsize=fontsize_-3)
+    axs[1].set_title(f"Residual Reliability vs. CoV\n {input_data[time]['title']}", fontsize=fontsize_)
     axs[1].tick_params(labelsize=fontsize_-5)
     axs[1].grid(True)
+
+
+        # Label subplots with (a) and (b) below the x-axis
+    axs[0].text(0.5, -0.25, r"\textbf{(a)}", transform=axs[0].transAxes,
+                fontsize=fontsize_, fontweight='bold', ha='center', va='top')
+
+    axs[1].text(0.5, -0.25, r"\textbf{(b)}", transform=axs[1].transAxes,
+                fontsize=fontsize_, fontweight='bold', ha='center', va='top')
+
 
     # Tight layout to avoid overlap
     plt.tight_layout()
 
     # Save combined plot
+    #plt.show()
     plt.savefig(output_combined_file, dpi=300)
     print(f"Combined scatter plot saved at: {output_combined_file}")
 
@@ -258,7 +279,7 @@ def scatter_char_violin(time):
 
     ax.set_xlabel("Prescribed Characteristic Value", fontsize=fontsize_-3)
     ax.set_ylabel("Optimal Characteristic Value", fontsize=fontsize_-3)
-    ax.set_title(f"Distribution of Optimal Values by Prescribed Characteristic Value {str(input_data[time]["period"])}", fontsize=fontsize_)
+    ax.set_title(f"Distribution of Optimal Values by Prescribed Characteristic Value\n {input_data[time]['title']}", fontsize=fontsize_)
     ax.tick_params(axis='x', labelsize=fontsize_ - 5)
     ax.tick_params(axis='y', labelsize=fontsize_ - 5)
 
@@ -277,4 +298,4 @@ def scatter_char_violin(time):
 #Test
 #scatter_char_box("tot")
 #scatter_char_violin("tot")
-#scatter("future_rcp45")
+#scatter("tot")

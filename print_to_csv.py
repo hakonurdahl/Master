@@ -322,7 +322,7 @@ def print_to_csv_diff(time_1, var_1, time_2, var_2):
                 print(f"Municipality {municipality} not found in first file.")
     
     # Write results to the output CSV file
-    csv_file_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/diff_{var_1}_{time_1}_{var_2}_{time_2}.csv"
+    csv_file_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/diff_{var_1}_{time_1}_{time_2}.csv"
     with open(csv_file_path, mode='w', encoding='utf-8', newline='') as f_out:
         writer = csv.writer(f_out)
         writer.writerow(["municipality", "var"])
