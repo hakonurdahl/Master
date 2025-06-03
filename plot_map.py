@@ -31,18 +31,20 @@ input_data = {
 
     #Variable
     #'My Title\n' + r'$\alpha - \omega$ are LaTeX Markup'
-    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
-    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
-    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value by Municipalities\n"},
-    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance by Municipalities\n"},
-    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Value by Municipalities\n"},
-    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index by Municipalities"}
+    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
+    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
+    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value per Municipality\n"},
+    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance per Municipality\n"},
+    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Values per Municipality\n"},
+    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index per Municipality"},
+    "char_actual": {"limits": (0, 6),"label": "$s_{k, T_{50}}$", "title": "Characteristic Value per Municipality, $T_{50}$\n"},
+    "beta_actual": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
 }
 
 
 def map(time, variable, show_colorbar=True):
     # === Font size control for both title and legend ===
-    fontsize_ = 20
+    fontsize_ = 21
 
     limits = input_data[variable]["limits"]
     label_ = input_data[variable]["label"]
@@ -51,8 +53,8 @@ def map(time, variable, show_colorbar=True):
 
     # File paths
     geojson_path = "C:/Users/hakon/SnowAnalysis_HU/DataSources/Basisdata_0000_Norge_25833_Kommuner_GeoJSON/Basisdata_0000_Norge_25833_Kommuner_GeoJSON.geojson"
-    output_map_path_1 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{time}.pdf"
-    output_map_path_2 = f"C:/Users/hakon/SnowAnalysis_HU/Output/main_output/{variable}_{time}.png"
+    output_map_path_1 = f"C:/Users/hakon/SnowAnalysis_HU/Figures/main_output/{variable}_{time}.pdf"
+    output_map_path_2 = f"C:/Users/hakon/SnowAnalysis_HU/Figures/main_output/{variable}_{time}.png"
     var_csv_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/{variable}_{time}.csv"
     points_csv_path = f"C:/Users/hakon/SnowAnalysis_HU/stored_data/points.csv"
 
@@ -147,9 +149,9 @@ def map(time, variable, show_colorbar=True):
         cax = fig.add_axes([0.89, 0.025, 0.02, 0.89])  # fixed position for colorbar
         sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
         cbar = fig.colorbar(sm, cax=cax)
-        cbar.set_label(label_, fontsize=fontsize_-2, labelpad=20, rotation=90)
+        cbar.set_label(label_, fontsize=fontsize_-3, labelpad=20, rotation=90)
         cbar.ax.yaxis.set_label_position('left')  # Moves label to the left of the colorbar
-        cbar.ax.tick_params(labelsize=fontsize_-3)
+        cbar.ax.tick_params(labelsize=fontsize_-4)
 
 
 
@@ -176,7 +178,7 @@ def map(time, variable, show_colorbar=True):
     ax.legend(
         handles=legend_handles,
         loc="lower right",
-        fontsize=fontsize_-3,
+        fontsize=fontsize_-4,
         frameon=True,
         handletextpad=0.001  # smaller value = smaller gap
     )
@@ -199,3 +201,6 @@ def map(time, variable, show_colorbar=True):
 #map("old", "beta", show_colorbar=False)
 #map("tot", "opt_char")
 #map("future_rcp45", "beta")
+
+#map("tot", "char_actual")
+#map("tot", "beta_actual")

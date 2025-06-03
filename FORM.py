@@ -12,6 +12,7 @@ from elevation import get_elevations
 from statistics import mean
 from math import ceil
 from A_funcstat import get_values
+from scipy.stats import gumbel_r
 
 
 
@@ -60,6 +61,12 @@ def char(name):
 
     return sk
 
+def char_actual(name):
+    snow_maxima=get_values(f'C:/Users/hakon/SnowAnalysis_HU/stored_data/swe_tot.csv', name, 'swe')
+    loc_, scale_ = stats.gumbel_r.fit(snow_maxima)
+    x_k = gumbel_r.ppf(0.98, loc=loc_, scale=scale_)
+    return x_k*9.8*2/1000 # Converting mm to kN/m
+
 def prop(name, time):
     snow_maxima=get_values(f'C:/Users/hakon/SnowAnalysis_HU/stored_data/swe_{time}.csv', name, 'swe')
 
@@ -80,17 +87,17 @@ def prop(name, time):
     
     return mean_snow_, cov_snow
 
-def municipality_form(name, time, char_opt):   #Calculate beta
+def municipality_form(name, time, char_assigned=None):   #Calculate beta
 
     
 
     mean_snow_, cov_snow = prop(name, time)
     
-    if char_opt == None:
+    if char_assigned == None:
         char_=char(name)*2
     else:
-        char_=char_opt
-
+        char_=char_assigned
+    #mean_snow_,cov_snow,char_ = 0.0001,0.0001,0.001  
     X = prep.RandomVariablesAux(mean_snow_, cov_snow, char_)
 
 
@@ -112,11 +119,11 @@ def municipality_form(name, time, char_opt):   #Calculate beta
     BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
 
     #Calculate reliaiblity index with Monte Carlo instead of FORM
-
+    #BETA = 1
     if BETA==1:
 
         BETA_mcs=zet.mcstest(z)
-        if BETA_mcs > 12:
+        if BETA_mcs > 100:
             return 12, ALPHA
         
         else:
@@ -163,7 +170,7 @@ run=0
 
 if run ==1:
 
-    municiaplities=["Lillestrøm"]
+    municiaplities=["Evenes", "Skjervøy", "Jølster", "Nordkapp"]
 
 
     for municipality in municiaplities:

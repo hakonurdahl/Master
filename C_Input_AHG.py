@@ -322,8 +322,8 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Y21']['dist'] = 'normal'             
     X['Y21']['mu'] = 1.0
     X['Y21']['cov'] = 0.025
-    X['Y21']['fractile'] = 0.95
-    X['Y21']['char'] = []               ## manual input for char. value               
+    X['Y21']['fractile'] = 'not used'
+    X['Y21']['char'] = 1               ## manual input for char. value               
     # --------------------------------------------------------------------
     X['Y22'] = {}    
     X['Y22']['name'] = 'Self weight concrete'
@@ -389,7 +389,7 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Y31']['mu'] = 1.0
     X['Y31']['cov'] = 0.1
     X['Y31']['fractile'] = 0.5  
-    X['Y31']['char'] = []                             
+    X['Y31']['char'] = 1                             
     #---------------------------------------------------------------------------------------
     X['Y32'] = {}    
     X['Y32']['name'] = 'Permanent load large V'
@@ -398,7 +398,7 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Y32']['mu'] = 1.0
     X['Y32']['cov'] = 0.2
     X['Y32']['fractile'] = 0.95   
-    X['Y32']['char'] = []                              
+    X['Y32']['char'] = 1.329                             
     #---------------------------------------------------------------------------------------
     # Variable load
     #--------------------------------------------------------------------------
@@ -446,7 +446,7 @@ def RandomVariables(mean_snow, cov_snow, char):
     X['Z2']['fractile'] = 0.98                             # Not needed if char user-defined; otherwise it corresponds to T=Tr_bas if char_method = 0 and to T = max(Tref;Tr_bas) if char_method = 1
     X['Z2']['weight'] = 0.1
     X['Z2']['char_method'] = 0                             # Dummy variable that specifies the method for the determination of char: 0 - MC simulation of both time-dependant (Q) and independent (X_Q) contribution and subsequent determination of char based on specific fractile of the resulting joint variable (XQ*Q); 1 - char directly obtained based on Gumbel dsitribution for Q only (check that char of X_Q = 1.0!) 
-    X['Z2']['char'] = char                                  # Char. value may be user-defined
+    X['Z2']['char'] = char                                 # Char. value may be user-defined
     #--------------------------------------------------------------------------
     # Imposed___________________________________________
     X['Z31'] = {}   ## Time invariant## 

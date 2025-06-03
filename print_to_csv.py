@@ -14,6 +14,7 @@ from swe import measurements
 from FORM import calibration
 from FORM import municipality_form
 from FORM import char
+from FORM import char_actual
 from FORM import prop
 from A_funcstat import get_values
 
@@ -256,6 +257,52 @@ def print_to_csv_char(start_municipality=None):
     print(f"CSV file successfully overwritten at: {csv_file_path}")
 
 
+def print_to_csv_char_actual(start_municipality=None):
+    # Define the CSV file paths
+    csv_file_path_1 = os.path.join(folder_path, "char_actual_tot.csv")
+    csv_file_path_2 = os.path.join(folder_path, "beta_actual_tot.csv")
+
+    # Determine file mode
+    overwrite = start_municipality is None
+    mode = "w" if overwrite else "a"
+    file1_exists = os.path.exists(csv_file_path_1)
+    file2_exists = os.path.exists(csv_file_path_2)
+
+    # Open both files simultaneously
+    with open(csv_file_path_1, mode=mode, newline="", encoding="utf-8") as file1, \
+         open(csv_file_path_2, mode=mode, newline="", encoding="utf-8") as file2:
+
+        writer1 = csv.writer(file1)
+        writer2 = csv.writer(file2)
+
+        # Write headers only if overwriting or if files are new
+        if overwrite or not file1_exists:
+            writer1.writerow(["municipality", "var"])
+        if overwrite or not file2_exists:
+            writer2.writerow(["municipality", "var"])
+
+        start_writing = overwrite
+
+        # Loop through municipalities and write data
+        for municipality, data in municipalities_data.items():
+            if not start_writing:
+                if municipality == start_municipality:
+                    start_writing = True  # Found the start point, begin writing
+
+            if start_writing:
+                char_ = char_actual(municipality)
+                beta, _ = municipality_form(municipality, "tot", char_)
+
+                writer1.writerow([municipality, char_])
+                writer2.writerow([municipality, beta])
+
+                file1.flush()
+                file2.flush()
+
+                print(f"Characteristic value and beta for {municipality} successfully added")
+
+    print(f"CSV files successfully {'overwritten' if overwrite else 'updated'} at: {csv_file_path_1} and {csv_file_path_2}")
+
 #
 def print_to_csv_cov(time, start_municipality=None):
     # Define the CSV file path
@@ -393,3 +440,4 @@ def print_to_csv_char_opt(time, start_municipality=None):
 
 #print_to_csv_diff("tot", "opt_char", "ec", "char")
 
+#print_to_csv_char_actual()

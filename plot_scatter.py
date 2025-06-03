@@ -33,28 +33,41 @@ input_data = {
     "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45", "title":"2024-2074 RCP 4.5"},
     "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85", "title":"2024-2074 RCP 8.5"},
     "new_old": {"period": ("", ""),"scenario": None, "title":""},
+    "actual_tot": {"period": (2024, 2074),"scenario": "rcp85", "title":"2024-2074 RCP 8.5"},
+
     
 
     #Variable
     #'My Title\n' + r'$\alpha - \omega$ are LaTeX Markup'
-    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
-    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index by Municipalities\n"},
-    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value by Municipalities\n"},
-    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance by Municipalities\n"},
-    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Value by Municipalities\n"},
-    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index by Municipalities"}
+    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
+    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
+    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value per Municipality\n"},
+    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance per Municipality\n"},
+    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Values per Municipality\n"},
+    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index per Municipality"},
+    "char_actual": {"limits": (0, 6),"label": "$s_{k, T_{50}}$", "title": "Characteristic Value per Municipality, $T_50$\n"},
+    "beta_actual": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
 }
 
 
-def scatter(time):
-    fontsize_ = 25
+def scatter(time, T50=None):
+    fontsize_ = 26
 
     # File paths
-    beta_file = f"stored_data/beta_{time}.csv"
+    if T50:
+        beta_file = f"stored_data/beta_actual_{time}.csv"
+
+    else:
+        beta_file = f"stored_data/beta_{time}.csv"
+    
     swe_file = f"stored_data/swe_{time}.csv"
 
-    output_folder = f"/Users/hakon/SnowAnalysis_HU/Output/main_output/"
-    output_combined_file = output_folder + f"scatter_{time}.png"
+    output_folder = f"/Users/hakon/SnowAnalysis_HU/Figures/main_output/"
+    
+    if T50:
+        output_combined_file = output_folder + f"scatter_T50_{time}.png"
+    else:
+        output_combined_file = output_folder + f"scatter_{time}.png"
 
     # Load data
     beta_df = pd.read_csv(beta_file)
@@ -94,15 +107,15 @@ def scatter(time):
 
     # Merge datasets
     merged_df = swe_df.join(beta_df, how="inner").dropna(subset=["SWE_Gumbel_Mean", "SWE_Gumbel_CoV", "var"])
-    merged_df = merged_df[merged_df["var"] != 10]
+    merged_df = merged_df[merged_df["var"] != 12]
 
-
-    # === Remove Mean Effect ===
-    X_mean = merged_df[["SWE_Gumbel_Mean"]]
-    y_reliability = merged_df["var"]
-    model_mean = LinearRegression()
-    model_mean.fit(X_mean, y_reliability)
-    merged_df["Residual_Reliability"] = y_reliability - model_mean.predict(X_mean)
+    if not T50:
+        # === Remove Mean Effect ===
+        X_mean = merged_df[["SWE_Gumbel_Mean"]]
+        y_reliability = merged_df["var"]
+        model_mean = LinearRegression()
+        model_mean.fit(X_mean, y_reliability)
+        merged_df["Residual_Reliability"] = y_reliability - model_mean.predict(X_mean)
 
     # === Create Subplots ===
     fig, axs = plt.subplots(1, 2, figsize=(14, 6), sharey=False)  # sharey=True if axes should align
@@ -124,24 +137,34 @@ def scatter(time):
 
 
     axs[0].axhline(y=3.8, color='red', linestyle='dashed', linewidth=1.5, label="Reliability target = 3.8")
-    axs[0].set_xlabel("Mean [$kN/m^2$]", fontsize=fontsize_-3)
-    axs[0].set_ylabel("Reliability Index", fontsize=fontsize_-3)
+    axs[0].set_xlabel("Mean [$kN/m^2$]", fontsize=fontsize_-4)
+    axs[0].set_ylabel("Reliability Index", fontsize=fontsize_-4)
     axs[0].set_title(f"Reliability Index vs. Mean\n {input_data[time]['title']}", fontsize=fontsize_)
-    axs[0].tick_params(labelsize=fontsize_-5)
+    axs[0].tick_params(labelsize=fontsize_-6)
     axs[0].grid(True)
-    axs[0].legend(fontsize=fontsize_-3)
+    axs[0].legend(fontsize=fontsize_-4)
 
     # --- Plot 2: Residual vs. CoV ---
+
+    if T50:
+        y_string = "var"
+    else:
+        y_string = "Residual_Reliability"
+
     axs[1].scatter(
         merged_df["SWE_Gumbel_CoV"],
-        merged_df["Residual_Reliability"],
+        merged_df[y_string],
         s=20,
         alpha=1
     )
-    axs[1].set_xlabel("CoV", fontsize=fontsize_-3)
-    axs[1].set_ylabel("Residual Reliability Index", fontsize=fontsize_-3)
-    axs[1].set_title(f"Residual Reliability vs. CoV\n {input_data[time]['title']}", fontsize=fontsize_)
-    axs[1].tick_params(labelsize=fontsize_-5)
+    axs[1].set_xlabel("CoV", fontsize=fontsize_-4)
+    if not T50:
+        axs[1].set_ylabel("Residual Reliability Index", fontsize=fontsize_-4)
+    if T50:
+        axs[1].set_title(f"Reliability Index vs. CoV\n {input_data[time]['title']}", fontsize=fontsize_)
+    else:
+        axs[1].set_title(f"Reliability Index vs. CoV\n {input_data[time]['title']}", fontsize=fontsize_)
+    axs[1].tick_params(labelsize=fontsize_-6)
     axs[1].grid(True)
 
 
@@ -170,7 +193,7 @@ def scatter_char_box(time):
     # Load data
     ec_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/char_ec.csv"
     opt_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/opt_char_{time}.csv"
-    output_path = f"/Users/hakon/SnowAnalysis_HU/Output/main_output/scatter_char_box_{time}.png"
+    output_path = f"/Users/hakon/SnowAnalysis_HU/Figures/main_output/scatter_char_box_{time}.png"
 
     ec_df = pd.read_csv(ec_path)
     opt_df = pd.read_csv(opt_path)
@@ -204,7 +227,7 @@ def scatter_char_box(time):
 
     plt.xlabel("Prescribed Characteristic Value", fontsize=fontsize_)
     plt.ylabel("Optimal Characteristic Value", fontsize=fontsize_)
-    plt.title(f"Distribution of Optimal Values by Prescribed Characteristic Value {str(input_data[time]["period"])}", fontsize=fontsize_)
+    plt.title(f"Comparison of Optimal and Prescribed Characteristic Values {str(input_data[time]["period"])}", fontsize=fontsize_)
     plt.xticks(fontsize=fontsize_-5)
     plt.yticks(fontsize=fontsize_-5)
 
@@ -219,11 +242,11 @@ def scatter_char_box(time):
 
 
 def scatter_char_violin(time):
-    fontsize_ = 25
+    fontsize_ = 30
     # File paths
     ec_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/char_ec.csv"
     opt_path = f"/Users/hakon/SnowAnalysis_HU/stored_data/opt_char_{time}.csv"
-    output_path = f"/Users/hakon/SnowAnalysis_HU/Output/main_output/scatter_char_violin_{time}.png"
+    output_path = f"/Users/hakon/SnowAnalysis_HU/Figures/main_output/scatter_char_violin_{time}.png"
 
     # Load data
     ec_df = pd.read_csv(ec_path)
@@ -262,7 +285,7 @@ def scatter_char_violin(time):
         "bean_show_median": False,
         "jitter_marker": '.',
         "jitter_marker_size": 1.0,
-        "bean_legend_text": "Optimal Characteristic Value"
+        "bean_legend_text": "Municipality"
     }
 
     sm.graphics.beanplot(data_for_plot, ax=ax, labels=category_labels,
@@ -274,14 +297,14 @@ def scatter_char_violin(time):
     xn, yn = 12,7.5  # Last violin's position and value
 
     ax.plot([x0, xn], [y0, yn], linestyle="--", color="red", label="1:1 Line")
-    ax.legend()
+    ax.legend(fontsize=fontsize_-11)
 
 
-    ax.set_xlabel("Prescribed Characteristic Value", fontsize=fontsize_-3)
-    ax.set_ylabel("Optimal Characteristic Value", fontsize=fontsize_-3)
-    ax.set_title(f"Distribution of Optimal Values by Prescribed Characteristic Value\n {input_data[time]['title']}", fontsize=fontsize_)
-    ax.tick_params(axis='x', labelsize=fontsize_ - 5)
-    ax.tick_params(axis='y', labelsize=fontsize_ - 5)
+    ax.set_xlabel("Prescribed Characteristic Value", fontsize=fontsize_-4)
+    ax.set_ylabel("Optimal Characteristic Value", fontsize=fontsize_-4)
+    ax.set_title(f"Comparison of Optimal and Prescribed Characteristic Values\n {input_data[time]['title']}", fontsize=fontsize_)
+    ax.tick_params(axis='x', labelsize=fontsize_ - 6)
+    ax.tick_params(axis='y', labelsize=fontsize_ - 6)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -299,3 +322,4 @@ def scatter_char_violin(time):
 #scatter_char_box("tot")
 #scatter_char_violin("tot")
 #scatter("tot")
+#scatter("tot", T50=True)

@@ -1446,8 +1446,8 @@ municipalities_data = {
     "Gildeskål": {"sk_0": 4.0, "hg": 150, "dsk": 1.0, "sk_maks": 9.0, "coordinates": {"latitude": 67.0333, "longitude": 14.0167}},
     "Grane": {"sk_0": 7.5, "hg": 150, "dsk": 1.0, "sk_maks": 9.0, "coordinates": {"latitude": 65.5667, "longitude": 13.3833}},
     "Hadsel": {"sk_0": 4.0, "hg": 150, "dsk": 1.0, "sk_maks": 1e6, "coordinates": {"latitude": 68.55920, "longitude": 14.90259}}, 
-    "Hábmer": {"sk_0": 4.0, "hg": 150, "dsk": 1.0, "sk_maks": 1e6, "coordinates": {"latitude": 68.0833, "longitude": 15.6333}},
-    "Aarborte": {"sk_0": 7.5, "hg": 150, "dsk": 1.0, "sk_maks": 9.0, "coordinates": {"latitude": 65.59828, "longitude": 13.99871}},  
+    "Hamarøy": {"sk_0": 4.0, "hg": 150, "dsk": 1.0, "sk_maks": 1e6, "coordinates": {"latitude": 68.0833, "longitude": 15.6333}},
+    "Hattfjelldal": {"sk_0": 7.5, "hg": 150, "dsk": 1.0, "sk_maks": 9.0, "coordinates": {"latitude": 65.59828, "longitude": 13.99871}},  
     "Hemnes": {"sk_0": 5.0, "hg": 150, "dsk": 1.0, "sk_maks": 9.0, "coordinates": {"latitude": 66.07696, "longitude": 13.81270}}, #66.07696, 13.81270
     "Herøy Nordland": {"sk_0": 2.5, "hg": 150, "dsk": 1.0, "sk_maks": 1e6, "coordinates": {"latitude": 65.9917, "longitude": 12.2833}},
     "Leirfjord": {"sk_0": 4.0, "hg": 150, "dsk": 1.0, "sk_maks": 1e6, "coordinates": {"latitude": 66.0833, "longitude": 12.8833}},

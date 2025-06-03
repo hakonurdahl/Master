@@ -98,7 +98,7 @@ class ZBETA:
 
 
     def mcstesta(self,z):
-        nos=10**9
+        nos=10**8
         fail=[]
         uu=np.random.normal(0, 1, (7, nos, 1))
         fail=-self.gU(uu,z)
@@ -109,7 +109,7 @@ class ZBETA:
         return betamcs
     
     def mcstest(self,z):
-        nos=10**9
+        nos=10**8
         fail=[]
         xr=A_funcstat.distinv(self.XR['dist'])(np.random.random_sample((nos)),self.XR['par'])
         r=A_funcstat.distinv(self.R['dist'])(np.random.random_sample((nos)),self.R['par'])

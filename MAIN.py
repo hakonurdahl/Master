@@ -31,7 +31,7 @@ import plot_scatter
 
 #print_to_csv.print_to_csv_beta("new")
 
-#print_to_csv.print_to_csv_beta("future_rcp45")
+#print_to_csv.print_to_csv_beta("future_rcp45", "Ringsaker")
 
 #print_to_csv.print_to_csv_beta("future_rcp85")
 
@@ -56,6 +56,8 @@ import plot_scatter
 
 #print_to_csv.print_to_csv_diff("future_rcp85", "opt_char", "ec", "char")
 
+print_to_csv.print_to_csv_char_actual()
+
 
 
 ## Plot ##
@@ -76,29 +78,35 @@ plot_map.map("tot", "opt_char")
 
 plot_map.map("tot", "opt_beta")
 
+plot_map.map("tot", "char_actual")
+
+plot_map.map("tot", "beta_actual")
+
+
+
 plot_map.map("future_rcp45", "opt_char")
 
 plot_map.map("future_rcp85", "opt_char")
 
 plot_map.map("tot", "cov")
 
-plot_scatter.scatter("tot")
+#plot_scatter.scatter("tot")
 
-plot_scatter.scatter("new")
+#plot_scatter.scatter("new")
 
-plot_scatter.scatter("old")
+#plot_scatter.scatter("old")
 
-plot_scatter.scatter("future_rcp45")
+#plot_scatter.scatter("future_rcp45")
 
-plot_scatter.scatter("future_rcp85")
+#plot_scatter.scatter("future_rcp85")
 
 plot_scatter.scatter_char_violin("tot")
-plot_scatter.scatter_char_box("tot")
+#plot_scatter.scatter_char_box("tot")
 
 
 
 plot_scatter.scatter_char_violin("future_rcp45")
-plot_scatter.scatter_char_box("future_rcp45")
+#plot_scatter.scatter_char_box("future_rcp45")
 
 plot_scatter.scatter_char_violin("future_rcp85")
-plot_scatter.scatter_char_box("future_rcp85")
+#plot_scatter.scatter_char_box("future_rcp85")

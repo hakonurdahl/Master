@@ -63,7 +63,7 @@ def coordinates(name, ds, save_all_attempts=False):
         "Vang": (61.12518, 8.57213),
         "Vik": (61.08815, 6.58583),
         "Vinje": (59.5689, 7.98935),
-        "Norddal": (62.29811193390707, 7.245234119948996),
+        "Norddal": (62.30, 7.25),
         "Fjord": (62.29811193390707, 7.245234119948996),
         "Nesna": (66.19917491265197, 13.034484695551873),
         "Gamvik": (71.04147355360465, 27.8681967921552),
@@ -100,7 +100,22 @@ def coordinates(name, ds, save_all_attempts=False):
     distances = np.sqrt((lat_grid - y_)**2 + (lon_grid - x_)**2)
     closest_indices = np.unravel_index(np.argsort(distances, axis=None)[:21], distances.shape)
     
-    
+
+    ########
+    test_list =[]
+    for j in range(21):
+        y_nearest = lat_grid[closest_indices[0][j], closest_indices[1][j]]
+        x_nearest = lon_grid[closest_indices[0][j], closest_indices[1][j]]
+        #swe_at_point = snow_water_equivalent.sel(y=y_nearest, x=x_nearest, method='nearest')
+        swe_at_point = snow_water_equivalent.sel(Yc=y_nearest, Xc=x_nearest, method='nearest')
+        swe_array = swe_at_point.values
+
+        # Convert back to lat/lon
+        actual_lon, actual_lat = to_latlon.transform(x_nearest, y_nearest)
+        test_list.append((actual_lat, actual_lon))
+    print(test_list)
+    #######
+
     if save_all_attempts:
         attempted_points = []
         attempted_points.append((latitude, longitude))
@@ -156,7 +171,7 @@ def coordinates(name, ds, save_all_attempts=False):
 
 
 #Test
-test_run = 1
+test_run = 0
 
 if test_run==1:
     #opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
@@ -173,7 +188,7 @@ if test_run==1:
 
 
 
-    test_mun = "Farsund"
+    test_mun = "Norddal"
     print(coordinates(test_mun, ds_, save_all_attempts=True))
     #print(test_mun + ',' + '"' + str(coordinates(test_mun, ds_, save_all_attempts=True)) + '"')
 
