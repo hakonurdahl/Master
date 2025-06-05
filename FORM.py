@@ -1,180 +1,132 @@
-#Import 
 import numpy as np
 import scipy.stats as stats
-import scipy as sp
 import scipy.optimize as opt
 import B_mainclass as form
 import C_Input_AHG as inp
 import D_Preprocessing as prep
-import swe as meas
-from municipalities import municipalities_data
-from elevation import get_elevations
 from statistics import mean
 from math import ceil
-from A_funcstat import get_values
 from scipy.stats import gumbel_r
+import csv
+import os
+from ast import literal_eval
+import pandas as pd
+
+# The main function is to calculate reliability indices for municipalities given SWE data input. 
+# In addition a reliaiblity-based calibration of the optimal characteristic value is included.
+# Other results as the 50-year return period characteristic values and parameters can also be calculated here.
+
+folder_path = "C:/Users/hakon/SnowAnalysis_HU/stored_data"
+
+# Load NS-EN1991-1-3 NA data
+en1991_df = pd.read_csv(os.path.join(folder_path, "EN1991.csv")).set_index("municipality")
+
+# Load elevation data
+elevation_df = pd.read_csv(os.path.join(folder_path, "elevation.csv")).set_index("municipality")
+elevation_df["elevation"] = elevation_df["elevation"].apply(lambda x: mean(literal_eval(x)))
+
+# Lazy-loaded SWE cache to avoid reloading per function call
+swe_data_cache = {}
+
+def get_swe_data(time):
+    if time in swe_data_cache:
+        return swe_data_cache[time]
+
+    path = os.path.join(folder_path, f"swe_{time}.csv")
+    swe_df = pd.read_csv(path).set_index("municipality")
+    swe_df["swe"] = swe_df["swe"].apply(lambda x: literal_eval(x) if isinstance(x, str) else x)
+    swe_data = swe_df["swe"].to_dict()
+    swe_data_cache[time] = swe_data
+    return swe_data
 
 
-
-input_data = {
-
-    #Period
-
-    "tot": {"period": (1960, 2024), "scenario": None},
-    "new": {"period": (1991, 2024),"scenario": None},
-    "old": {"period": (1960, 1990),"scenario": None},
-    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45"},
-    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85"},
-
-    #Variable
-
-    "beta": {"limits": (3,6),"label": "Reliability Index ($\\beta$)", "title": "Municipalities Colored by Reliability Index ($\\beta$)"},
-    "char": {"limits": (0, 10),"label": "Characteristic Value", "title": "Municipalities Colored by Characteristic Value"},
-    "CoV": {"limits": (0,1),"label": "Coefficient of Variance", "title": "Municipalities Colored by Coefficient of Variance"},
-
-}
-
-# The normalized FORM algorythm used in the project assignment. The characteristic value is calculated from the directory/csv file. The elevation chosen is the average of all the elevations
-# from elevation_samples.py. The form is done by calculating the CoV from the data. However, it doesn't make sense to normalize when the absolute value of the data is relevant? 
-# I also have trouble normalizing the characteristic value. a_q and a_g is chosen arbitrarily. 
-
-
-
+# Calculate characteristic snow load (NS-EN1991-1-3)
 def char(name):
-    
-    sk_0=municipalities_data[name]['sk_0']
-    hg=municipalities_data[name]['hg']
-    dsk=municipalities_data[name]['dsk']
-    sk_maks=municipalities_data[name]['sk_maks']
-    
-    elevation=mean(get_values('C:/Users/hakon/SnowAnalysis_HU/stored_data/elevation.csv',name, 'elevation'))
+    m = en1991_df.loc[name]
+    elevation = elevation_df.loc[name, "elevation"]
+    n = max(ceil((elevation - m["hg"]) / 100), 0)
+    sk = m["sk_0"] + m["dsk"] * n
+    return min(sk, m["sk_maks"])
 
-    n=max(ceil((elevation-hg)/100), 0)
+# Calculate characteristic snow load based on T=50 year return period
+def char_t50(name):
+    snow_maxima = get_swe_data("tot")[name]
+    loc, scale = gumbel_r.fit(snow_maxima)
+    x_k = gumbel_r.ppf(0.98, loc=loc, scale=scale)
+    return x_k * 9.8 * 2 / 1000  # Converting mm SWE to kN/m
 
-    if sk_maks==None:
-        sk=sk_0+dsk*n
-    
-    else:
-        sk=min(sk_0+dsk*n, sk_maks)
-
-
-
-    return sk
-
-def char_actual(name):
-    snow_maxima=get_values(f'C:/Users/hakon/SnowAnalysis_HU/stored_data/swe_tot.csv', name, 'swe')
-    loc_, scale_ = stats.gumbel_r.fit(snow_maxima)
-    x_k = gumbel_r.ppf(0.98, loc=loc_, scale=scale_)
-    return x_k*9.8*2/1000 # Converting mm to kN/m
-
+# Get mean and CoV of snow load for given municipality and time
 def prop(name, time):
-    snow_maxima=get_values(f'C:/Users/hakon/SnowAnalysis_HU/stored_data/swe_{time}.csv', name, 'swe')
+    snow_maxima = get_swe_data(time)[name]
 
-    if np.sum(snow_maxima)<10:
+    if np.sum(snow_maxima) < 10:
         loc, scale = 0.01, 0.01
     else:
-        loc, scale = stats.gumbel_r.fit(snow_maxima)
+        loc, scale = gumbel_r.fit(snow_maxima)
 
-    gamma = 0.57722  
-
-    # Compute mean and standard deviation
+    gamma = 0.57722
     mean_gumbel = loc + gamma * scale
     std_gumbel = (np.pi / np.sqrt(6)) * scale
-    mean_snow_=mean_gumbel*9.8*2/1000 # Converting mm to kN/m
-
-    # Compute CoV
+    mean_snow = mean_gumbel * 9.8 * 2 / 1000    # Converting mm SWE to kN/m
     cov_snow = std_gumbel / mean_gumbel
-    
-    return mean_snow_, cov_snow
 
-def municipality_form(name, time, char_assigned=None):   #Calculate beta
+    return mean_snow, cov_snow
 
-    
+# Calculate beta (reliability index), optionally with custom characteristic value
+def municipality_form(name, time, char_assigned=None):
+    mean_snow, cov_snow = prop(name, time)
+    char_val = char_assigned if char_assigned is not None else char(name) * 2 # *2 from roof-width 
 
-    mean_snow_, cov_snow = prop(name, time)
-    
-    if char_assigned == None:
-        char_=char(name)*2
-    else:
-        char_=char_assigned
-    #mean_snow_,cov_snow,char_ = 0.0001,0.0001,0.001  
-    X = prep.RandomVariablesAux(mean_snow_, cov_snow, char_)
-
-
+    X = prep.RandomVariablesAux(mean_snow, cov_snow, char_val)
     g_ = inp.StartValues()
-    aqq=0.9
-    agg=0.1
-    deq=1
+    deq = 1
 
-    P_= X['Y32']                # Permanent load                                                
-    XX_ = X['Y11']              # Load effect model uncertainty
-    Q_ = X['Z2']                # Variable load 
-    XQ_ = X[X['Z2']['MUV']]     #
-    XR_= X['X11']               # Resistance model uncertainty
-    R_ = X[X['X11']['RV']]      # Material property
-    G_ = X[X['X11']['GV']]      # Self weight
+    P_ = X['Y32']
+    XX_ = X['Y11']
+    Q_ = X['Z2']
+    XQ_ = X[X['Z2']['MUV']]
+    XR_ = X['X11']
+    R_ = X[XR_['RV']]
+    G_ = X[XR_['GV']]
 
-    zet = form.ZBETA(ag=agg, aq=aqq, XR=XR_, R=R_, XX=XX_, G=G_, P=P_, XQ=XQ_, Q=Q_, g=g_, d=deq)
-    z=zet.__zeta__()                    #find design variable z per single case
-    BETA,ALPHA = zet.f1(z)              #find the corresponding beta index and the alpha values
+    zet = form.ZBETA(XR=XR_, R=R_, XX=XX_, G=G_, P=P_, XQ=XQ_, Q=Q_, g=g_, d=deq)
+    z = zet.__zeta__()
+    BETA, ALPHA = zet.f1(z)
 
-    #Calculate reliaiblity index with Monte Carlo instead of FORM
-    #BETA = 1
-    if BETA==1:
+    if BETA == 1:
+        BETA_mcs = zet.mcstest(z)
+        return (12 if BETA_mcs > 100 else BETA_mcs), ALPHA
 
-        BETA_mcs=zet.mcstest(z)
-        if BETA_mcs > 100:
-            return 12, ALPHA
-        
-        else:
+    return BETA, ALPHA
 
-            return BETA_mcs, ALPHA
-
-
-    return BETA,ALPHA
-
-
-
+# Used to find the so-called optimal characteristic value, not bound by return period
 def calibration(name, time, beta_target):
-    """
-    Iterates through three bounded regions (0-9, 9-18, 18-27) and finds the 
-    characteristic value where the beta value is within the target range.
-    """
-
-    beta_target_range=(beta_target-0.1, beta_target+0.1)
-
-    
-
+    beta_target_range = (beta_target - 0.01, beta_target + 0.01)
 
     def func_opt(char_opt):
         beta, _ = municipality_form(name, time, char_opt)
-        return np.abs(beta - np.mean(beta_target_range))  # Optimize to the center of the target range
+        return abs(beta - np.mean(beta_target_range))
 
-    # Define boundaries to iterate over
-    bounds_list = [(0, 5.1), (5, 10.1), (10, 18.1), (18, 27),(26,40)]
+    bounds_list = [(0, 5.1), (5, 10.1), (10, 18.1), (18, 27), (26, 40)]
 
-
-    for bnds in bounds_list:
-        res = opt.minimize_scalar(func_opt, bounds=bnds, method='bounded')
+    for bounds in bounds_list:
+        res = opt.minimize_scalar(func_opt, bounds=bounds, method='bounded')
         optimal_char = res.x
         optimal_beta, _ = municipality_form(name, time, optimal_char)
 
-        # Check if the beta is within the target range
         if beta_target_range[0] <= optimal_beta <= beta_target_range[1]:
             return optimal_char, optimal_beta
 
     return "Error", "Error"
 
-
 run=0
 
 if run ==1:
 
-    municiaplities=["Evenes", "Skjervøy", "Jølster", "Nordkapp"]
-
+    municiaplities=["Evenes"]
 
     for municipality in municiaplities:
-        BETA_, ALPHA_=municipality_form(municipality, "tot", None)
+        BETA_, ALPHA_=municipality_form(municipality, "tot")
         print(municipality,",",BETA_)
 
 

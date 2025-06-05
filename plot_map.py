@@ -8,6 +8,12 @@ from pyproj import Transformer
 from matplotlib.colors import Normalize
 import matplotlib.patches as mpatches  # Import for custom legend patches
 import ast
+from C_Input_AHG import input_data
+from matplotlib.lines import Line2D
+
+
+# Latex font
+
 from matplotlib import rcParams
 rcParams.update({
     "text.usetex": True,
@@ -16,40 +22,19 @@ rcParams.update({
     "axes.formatter.use_mathtext": True
 })
 
-
-input_data = {
-
-    #Period
-
-    "tot": {"period": (1960, 2024), "scenario": None, "title":"1960-2024"},
-    "new": {"period": (1991, 2024),"scenario": None, "title":"1991-2024"},
-    "old": {"period": (1960, 1990),"scenario": None, "title":"1960-1990"},
-    "future_rcp45": {"period": (2024, 2074),"scenario": "rcp45", "title":"2024-2074 RCP 4.5"},
-    "future_rcp85": {"period": (2024, 2074),"scenario": "rcp85", "title":"2024-2074 RCP 8.5"},
-    "new_old": {"period": ("", ""),"scenario": None, "title":""},
-    
-
-    #Variable
-    #'My Title\n' + r'$\alpha - \omega$ are LaTeX Markup'
-    "beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
-    "opt_beta": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
-    "char": {"limits": (0, 6),"label": "$s_{k}$", "title": "Characteristic Value per Municipality\n"},
-    "cov": {"limits": (0.3,0.8),"label": "CoV", "title": "Coefficient of Variance per Municipality\n"},
-    "opt_char": {"limits": (0,6),"label": '$s_{k,opt}$', "title": "Optimal Characteristic Values per Municipality\n"},
-    "diff_beta": {"limits": (-2,2),"label": "$\\Delta\\beta$", "title": "Change in Reliability Index per Municipality"},
-    "char_actual": {"limits": (0, 6),"label": "$s_{k, T_{50}}$", "title": "Characteristic Value per Municipality, $T_{50}$\n"},
-    "beta_actual": {"limits": (2,6),"label": "$\\beta$", "title": "Reliability Index per Municipality\n"},
-}
-
+# This file plots a map with values from a csv files for each municipality
+# Colorbar can be removed. Can be useful is two plots are to be put side by side displaying the same variable
 
 def map(time, variable, show_colorbar=True):
-    # === Font size control for both title and legend ===
+    # Font size control for both title and legend 
     fontsize_ = 21
+
+    # To increase automation, input data are added to C_Input_AHG that gives relevant parameters
+    # Depening on what variable is plotted, and what period is used as input
 
     limits = input_data[variable]["limits"]
     label_ = input_data[variable]["label"]
     title_ = f"{input_data[variable]['title']} {input_data[time]['title']}"
-
 
     # File paths
     geojson_path = "C:/Users/hakon/SnowAnalysis_HU/DataSources/Basisdata_0000_Norge_25833_Kommuner_GeoJSON/Basisdata_0000_Norge_25833_Kommuner_GeoJSON.geojson"
@@ -102,6 +87,7 @@ def map(time, variable, show_colorbar=True):
     highlight_rows = df[df["municipality"].isin(highlight_municipalities)]
 
     # Normalize beta values for colormap
+    # Allows for automatic limits for variable, or a predefined. The latter is preferred for better control and to facilitate comparison across maps
     lim = 1
     if lim == 0:
         norm = Normalize(vmin=df["var"].min(), vmax=df["var"].max())
@@ -115,6 +101,7 @@ def map(time, variable, show_colorbar=True):
     df["Geometry"] = df.apply(lambda row: gpd.points_from_xy([row["Easting"]], [row["Northing"]])[0], axis=1)
     df["Municipality_GDF"] = df.apply(lambda row: gdf_kommune[gdf_kommune.intersects(row["Geometry"])], axis=1)
 
+    # The possibility to check for missing municipalities, i.e. municipalities not included
     run_missing = 0
 
     if run_missing == 1:
@@ -129,13 +116,12 @@ def map(time, variable, show_colorbar=True):
         for name in sorted(municipalities_without_points):
             print("-", name)
 
-    # === Plotting ===
-    # Consistent map area
+    # Plotting 
+    # Consistent map area, usefull to enable maps to be arranged side by side in latex without size mismatch
+    # Subplot was considered, but this would decrease automation and increase complexity
     fig = plt.figure(figsize=(6.3, 8))
     ax = fig.add_axes([0.0, 0.02, 0.89, 0.9])  # [left, bottom, width, height]
-    #ax = fig.add_axes([0.001, 0.01, 0.87, 0.98])  # [left, bottom, width, height]
-    
-    
+        
     ax.set_title(title_, fontsize=fontsize_)
 
     gdf_kommune.plot(ax=ax, color='white', edgecolor=None, linewidth=0.0)
@@ -153,16 +139,11 @@ def map(time, variable, show_colorbar=True):
         cbar.ax.yaxis.set_label_position('left')  # Moves label to the left of the colorbar
         cbar.ax.tick_params(labelsize=fontsize_-4)
 
-
-
-
     # Custom legend
     legend_entries = [
         (min_beta_row["municipality"], min_beta_row["var"]),
         (max_beta_row["municipality"], max_beta_row["var"])
     ] + list(zip(highlight_rows["municipality"], highlight_rows["var"]))
-
-    from matplotlib.lines import Line2D
 
     legend_handles = [
         Line2D([0], [0],
@@ -174,7 +155,6 @@ def map(time, variable, show_colorbar=True):
         for mun, beta in legend_entries
     ]
 
-
     ax.legend(
         handles=legend_handles,
         loc="lower right",
@@ -183,15 +163,14 @@ def map(time, variable, show_colorbar=True):
         handletextpad=0.001  # smaller value = smaller gap
     )
 
-
-    # === Remove grid and axis details ===
+    # Remove grid and axis details 
     ax.grid(False)
     ax.set_xlabel("")
     ax.set_ylabel("")
     ax.set_xticks([])
     ax.set_yticks([])
 
-    # === Save ===
+    # Save
     os.makedirs(os.path.dirname(output_map_path_1), exist_ok=True)
     #plt.savefig(output_map_path_1, dpi=300)
     plt.savefig(output_map_path_2, dpi=300)

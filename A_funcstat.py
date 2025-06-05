@@ -271,6 +271,7 @@ def get_values(csv_file_path, municipality_name,variable):
     print(f"No data found for municipality: {municipality_name}")
     return None
 
+#Find closest points -HU
 def closest(lat, lon, ds):# Calculate the distance to  for each point in the SWE dataset
                 
 

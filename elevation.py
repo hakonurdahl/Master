@@ -1,13 +1,12 @@
 import requests
 import pyproj
+from pyproj import Transformer
 
-def convert_to_utm33(lat, lon):
-    """Convert WGS84 (lat, lon) to UTM Zone 33 (EPSG:25833)."""
-    wgs84 = pyproj.CRS("EPSG:4326")
-    utm33 = pyproj.CRS("EPSG:25833")
-    transformer = pyproj.Transformer.from_crs(wgs84, utm33, always_xy=True)
-    easting, northing = transformer.transform(lon, lat)
-    return easting, northing
+# This file returns elevation for a points by utilizing an API from hoydedata.no
+# DTM is preferred, but if no DTM is available, the DOM is returned, the differnce beeing that
+# the former is terrein relative to ocean level, while DOM includes vegetation and such
+
+transformer = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:25833", always_xy=True)
 
 def get_dom_elevation(easting, northing):
     """Fetch elevation using WMS GetFeatureInfo from DOM."""
@@ -44,9 +43,10 @@ def get_elevations(points):
     elevations = []
 
     for lat, lon in points:
-        easting, northing = convert_to_utm33(lat, lon)
-
-        # First attempt: standard API (likely DTM)
+        
+        # Mismatch between csv file format and API requires coordinate transformation
+        easting, northing = transformer.transform(lon, lat)
+        # First attempt: DTM
         url = f"https://ws.geonorge.no/hoydedata/v1/punkt?nord={northing}&ost={easting}&koordsys=25833&geojson=false"
         try:
             response = requests.get(url)

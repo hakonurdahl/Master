@@ -1,16 +1,17 @@
-
 import xarray as xr
 import matplotlib.pyplot as plt
 from pyproj import Transformer
 import numpy as np
 import pandas as pd
-from municipalities import municipalities_data
 from A_funcstat import closest
 import requests
 
+# The main output from this file is a points that are known to have SWE values in the SeNorge database
+# For automation purposes, an API is used to find appropriate points using a the name of the municipality along with keyword
+# If needed, the function can return a variety of interesting results, as a list of points within 
+# the square kilometer around the main points, or a list of the points tested for SWE values.
 
-
-# A function that find the coordinates of a place from https://nominatim.openstreetmap.org
+# A function that find the coordinates of a place from a string https://nominatim.openstreetmap.org
 def get_coordinates(building_name):
     url = "https://nominatim.openstreetmap.org/search"
     params = {
@@ -33,9 +34,9 @@ def get_coordinates(building_name):
         print("Didn't find coordinates for", building_name)
         return None
 
-
 def coordinates(name, ds, save_all_attempts=False):
 
+    # Coordinate transformation required due to SeNorge dataset and Nominatim mismatch 
     transformer = Transformer.from_crs("EPSG:4326", "EPSG:32633", always_xy=True)
     to_latlon = Transformer.from_crs("EPSG:32633", "EPSG:4326", always_xy=True)
 
@@ -44,7 +45,6 @@ def coordinates(name, ds, save_all_attempts=False):
     # municipality that is relatively populated. 
 
     keywords = [" rådhus", " barneskole", " skule", " kirke", " skole"]
-    
     
     # Special-case municipalities with manually specified coordinates
     special_coordinates = {
@@ -81,41 +81,22 @@ def coordinates(name, ds, save_all_attempts=False):
             if data is not None:
                 break
 
-
     latitude, longitude = data
-
    
     x_, y_ = transformer.transform(longitude, latitude)
 
-    #Algorithm to make sure the point contain SWE values
-    
-    #snow_water_equivalent = ds['snow_water_equivalent']
-    snow_water_equivalent = ds['snow_water_equivalent__map_rcp45_daily']
+    ### Algorithm to make sure the point contain SWE values ###
+    ###########################################################
 
-    #latitudes = ds['y'].values
-    #longitudes = ds['x'].values
+    snow_water_equivalent = ds['snow_water_equivalent__map_rcp85_daily']
+
     latitudes = ds['Yc'].values
     longitudes = ds['Xc'].values
     lon_grid, lat_grid = np.meshgrid(longitudes, latitudes)
     distances = np.sqrt((lat_grid - y_)**2 + (lon_grid - x_)**2)
     closest_indices = np.unravel_index(np.argsort(distances, axis=None)[:21], distances.shape)
-    
 
-    ########
-    test_list =[]
-    for j in range(21):
-        y_nearest = lat_grid[closest_indices[0][j], closest_indices[1][j]]
-        x_nearest = lon_grid[closest_indices[0][j], closest_indices[1][j]]
-        #swe_at_point = snow_water_equivalent.sel(y=y_nearest, x=x_nearest, method='nearest')
-        swe_at_point = snow_water_equivalent.sel(Yc=y_nearest, Xc=x_nearest, method='nearest')
-        swe_array = swe_at_point.values
-
-        # Convert back to lat/lon
-        actual_lon, actual_lat = to_latlon.transform(x_nearest, y_nearest)
-        test_list.append((actual_lat, actual_lon))
-    print(test_list)
-    #######
-
+    # Alternative to check what points were attempted
     if save_all_attempts:
         attempted_points = []
         attempted_points.append((latitude, longitude))
@@ -123,7 +104,6 @@ def coordinates(name, ds, save_all_attempts=False):
     for j in range(21):
         y_nearest = lat_grid[closest_indices[0][j], closest_indices[1][j]]
         x_nearest = lon_grid[closest_indices[0][j], closest_indices[1][j]]
-        #swe_at_point = snow_water_equivalent.sel(y=y_nearest, x=x_nearest, method='nearest')
         swe_at_point = snow_water_equivalent.sel(Yc=y_nearest, Xc=x_nearest, method='nearest')
         swe_array = swe_at_point.values
 
@@ -133,17 +113,21 @@ def coordinates(name, ds, save_all_attempts=False):
         if save_all_attempts:
             attempted_points.append((actual_lat, actual_lon))
 
+        # If a points returing SWE values are found, the algorithm ends
         if not np.isnan(swe_array).all():
             actual_lon, actual_lat = to_latlon.transform(x_nearest, y_nearest)      
             if save_all_attempts:
                 return attempted_points
             break
+    
+    ###########################################################
 
     coordinate_samples=[]
     coordinate_samples.append((float(actual_lat), float(actual_lon)))
 
-    #Function to retrievy a evenly spread out grip of points within the square kilometer. 
-    # Currently not in use.
+    # Function for a evenly spread out grip of points within the square kilometer. 
+    # Was first thought of as a means of finding the average elevation for calculations of char.
+    # However, the OI scheme include elevation effects. Could still be interesting, but currently not in use.
     grid=0
     if grid ==1:
         coordinate_samples=[]
@@ -154,9 +138,7 @@ def coordinates(name, ds, save_all_attempts=False):
 
             for k in range(10):
                 
-                
                 lat, lon = closest(test_lat, test_lon)
-
                 if lon==actual_lon and lat==actual_lat:
                     coordinate_samples.append((float(test_lat), float(test_lon)))
 
@@ -164,29 +146,20 @@ def coordinates(name, ds, save_all_attempts=False):
             
             test_lat+=0.001
 
-
-        
-
     return coordinate_samples
-
 
 #Test
 test_run = 0
 
 if test_run==1:
-    #opendap_url = f'https://thredds.met.no/thredds/dodsC/senorge/seNorge_snow/swe/swe_2024.nc'
-    opendap_url = f'https://thredds.met.no/thredds/dodsC/KSS/Klima_i_Norge_2100/utgave2015/SWE/MPI_RCA/rcp45/rcp45_MPI_RCA_SWE_daily_2025_v4.nc'
-
+    opendap_url = f'https://thredds.met.no/thredds/dodsC/KSS/Klima_i_Norge_2100/utgave2015/SWE/MPI_RCA/rcp85/rcp85_MPI_RCA_SWE_daily_2025_v4.nc'
 
     try:
         # Open the dataset    
         ds_ = xr.open_dataset(opendap_url, chunks=None)
         
-
     except Exception as e:
         print(f"Could not process year 2024: {e}")
-
-
 
     test_mun = "Norddal"
     print(coordinates(test_mun, ds_, save_all_attempts=True))

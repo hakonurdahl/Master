@@ -2,7 +2,6 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
-from municipalities import municipalities_data
 from A_funcstat import get_values
 
 def measurements(name, ds, scen):

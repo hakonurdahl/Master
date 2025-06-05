@@ -8,9 +8,9 @@ import numpy as np
 import scipy as sp
 import A_funcstat
 class ZBETA:
-    def __init__(self, ag, aq, XR, R, XX, G, P, XQ, Q, g,d):
-        self.ag = ag
-        self.aq = aq
+    def __init__(self, XR, R, XX, G, P, XQ, Q, g,d):  #Removed ag and aq as input
+        #self.ag = ag   Not used -HU
+        #self.aq = aq
         self.XR = XR
         self.R = R
         self.XX = XX
@@ -30,8 +30,8 @@ class ZBETA:
         g_p = self.g['gp']
         g_q = self.g['gq']          
         g_r = self.R['gm']
-        ag = self.ag
-        aq = self.aq
+        #ag = self.ag   Not used -HU
+        #aq = self.aq
         deq=self.d              
         if deq == 0:
             z = ((gk*g_g+pk*g_p)+qk*g_q)*g_r/(xrk*rk)
